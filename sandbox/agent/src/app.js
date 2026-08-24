@@ -1,31 +1,275 @@
 import express from "express";
 import morgan from "morgan";
 import fs from "fs";
-
+import path from "path";
 
 const app = express();
 app.use(morgan("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+const WORKING_DIR = "/workspace";
 
-const WORKING_DIR = "/workspace"
-
-
-
-app.get("/",(req,res)=>{
-    res.status(200).json({
-        message:"Hello from sandbox agent",
-        status:"success",
-    });
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message: "Hello from sandbox agent",
+    status: "success",
+  });
 });
 
+app.get("/list-files", async (req, res) => {
+  const listFiles = async (dir, baseDir) => {
+    const entries = await fs.promises.readdir(dir, { withFileTypes: true });
+    const files = [];
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = path.relative(baseDir, fullPath);
+      if (
+        entry.isDirectory() &&
+        ["node_modules", ".git", "dist"].includes(entry.name)
+      ) {
+        continue;
+      }
 
-app.get("/list-files",async (req,res)=>{
-    const elements = await fs.promises.readdir(WORKING_DIR);
+      if (entry.isDirectory()) {
+        files.push(...(await listFiles(fullPath, baseDir)));
+      } else {
+        files.push(relativePath);
+      }
+    }
 
-    res.status(200).json({
-        elements,
-        message:"Elements in working directory"
+    return files;
+  };
+
+  try {
+    const files = await listFiles(WORKING_DIR, WORKING_DIR);
+    return res.status(200).json({
+      message: "Files listed successfully",
+      files,
+      status: "success",
     });
+  } catch (error) {
+    return res.status(500).json({
+      message: `Error listing files: ${error.message}`,
+      status: "error",
+    });
+  }
+});
+
+app.get("/read-files", async (req, res) => {
+  const files = req.query.files;
+
+  if (!files) {
+    return res.status(400).json({
+      status: "error",
+      message: "No files specified in query parameter",
+    });
+  }
+
+  const fileList = files.split(",");
+
+  const results = await Promise.all(
+    fileList.map(async (file) => {
+      const filePath = path.join(WORKING_DIR, file);
+      try {
+        const content = await fs.promises.readFile(filePath, "utf-8");
+        return {
+          [filePath.replace(WORKING_DIR, "")]: content,
+        };
+      } catch (err) {
+        return {
+          [filePath.replace(WORKING_DIR, "")]:
+            `Error reading file : ${err.message}`,
+        };
+      }
+    }),
+  );
+
+  res.status(200).json({
+    message: "File contents",
+    files: results,
+  });
+});
+
+app.patch("/update-files", async (req, res) => {
+  const updates = req.body.updates;
+
+  if (!updates || !Array.isArray(updates)) {
+    return res.status(400).json({
+      message:
+        "Invalid request body. Expected a JSON object with an 'updates' property containing an array of file updates.",
+      status: "error",
+    });
+  }
+
+  const results = await Promise.all(
+    updates.map(async (update) => {
+      const { file, content } = update;
+
+      const filePath = path.join(WORKING_DIR, file);
+      try {
+        await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+        await fs.promises.writeFile(filePath, content, "utf-8");
+        return {
+          [filePath.replace(WORKING_DIR, "")]: "File updated successfully",
+        };
+      } catch (err) {
+        return {
+          [filePath.replace(WORKING_DIR, "")]:
+            `Error updating file : ${err.message}`,
+        };
+      }
+    }),
+  );
+
+  res.status(200).json({
+    message: "File update results",
+    results,
+  });
+});
+
+app.post("/create-files", async (req, res) => {
+  const files = req.body.files;
+
+  if (!files || !Array.isArray(files)) {
+    return res.status(400).json({
+      message:
+        "Invalid request body. Expected a JSON object with a 'files' property containing an array of file objects, each with 'file' and 'content' properties.",
+      status: "error",
+    });
+  }
+
+  const results = await Promise.all(
+    files.map(async (fileObj) => {
+      const { file, content } = fileObj;
+      const filePath = path.join(WORKING_DIR, file);
+      try {
+        await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
+        await fs.promises.writeFile(filePath, content || "", "utf-8");
+        return {
+          [filePath.replace(WORKING_DIR, "")]: "File created successfully",
+        };
+      } catch (err) {
+        return {
+          [filePath.replace(WORKING_DIR, "")]:
+            `Error creating file: ${err.message}`,
+        };
+      }
+    }),
+  );
+
+  res.status(200).json({
+    message: "File create results",
+    results,
+  });
+});
+
+app.post("/create-folder", async (req, res) => {
+  const folders =
+    req.body.folders || (req.body.folder ? [req.body.folder] : null);
+
+  if (!folders || !Array.isArray(folders)) {
+    return res.status(400).json({
+      message:
+        "Invalid request body. Expected 'folder' string or 'folders' array.",
+      status: "error",
+    });
+  }
+
+  const results = await Promise.all(
+    folders.map(async (folderPath) => {
+      const fullPath = path.join(WORKING_DIR, folderPath);
+      try {
+        await fs.promises.mkdir(fullPath, { recursive: true });
+        return {
+          [fullPath.replace(WORKING_DIR, "")]: "Folder created successfully",
+        };
+      } catch (err) {
+        return {
+          [fullPath.replace(WORKING_DIR, "")]:
+            `Error creating folder: ${err.message}`,
+        };
+      }
+    }),
+  );
+
+  res.status(200).json({
+    message: "Folder create results",
+    results,
+  });
+});
+
+app.delete("/delete", async (req, res) => {
+  // Support both Query Parameters (?file=... or ?files=...) and JSON Body ({file: ...}, {paths: [...]})
+  const queryTargets =
+    req.query.paths ||
+    req.query.files ||
+    req.query.folders ||
+    (req.query.path
+      ? [req.query.path]
+      : req.query.file
+        ? [req.query.file]
+        : req.query.folder
+          ? [req.query.folder]
+          : null);
+
+  const queryList =
+    typeof queryTargets === "string" ? queryTargets.split(",") : queryTargets;
+
+  const bodyTargets =
+    req.body.paths ||
+    req.body.files ||
+    req.body.folders ||
+    (req.body.path
+      ? [req.body.path]
+      : req.body.file
+        ? [req.body.file]
+        : req.body.folder
+          ? [req.body.folder]
+          : null);
+
+  const rawTargets = queryList || bodyTargets;
+
+  if (!rawTargets || !Array.isArray(rawTargets) || rawTargets.length === 0) {
+    return res.status(400).json({
+      message:
+        "Invalid request. Provide 'path', 'file', 'folder' (string) or 'paths', 'files', 'folders' (array or comma-separated query).",
+      status: "error",
+    });
+  }
+
+  const results = await Promise.all(
+    rawTargets.map(async (targetItem) => {
+      const cleanRelativePath = String(targetItem).trim().replace(/^[/\\]+/, "");
+      const fullPath = path.resolve(WORKING_DIR, cleanRelativePath);
+
+      // Prevent deleting root /workspace or escaping outside workspace
+      if (
+        fullPath === path.resolve(WORKING_DIR) ||
+        !fullPath.startsWith(path.resolve(WORKING_DIR))
+      ) {
+        return {
+          [targetItem]: "Error: Cannot delete root workspace or paths outside workspace",
+        };
+      }
+
+      try {
+        await fs.promises.rm(fullPath, { recursive: true, force: true });
+        return {
+          [`/${cleanRelativePath}`]: "Deleted successfully",
+        };
+      } catch (err) {
+        return {
+          [`/${cleanRelativePath}`]: `Error deleting: ${err.message}`,
+        };
+      }
+    }),
+  );
+
+  res.status(200).json({
+    message: "Delete results",
+    results,
+  });
 });
 
 export default app;
