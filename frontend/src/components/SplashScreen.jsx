@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Code2,
   FolderCode,
@@ -12,6 +13,10 @@ import {
   Globe,
   Loader2,
   ArrowRight,
+  Zap,
+  Box,
+  Compass,
+  Command,
 } from "lucide-react";
 
 export default function SplashScreen({ onSandboxCreated }) {
@@ -19,13 +24,12 @@ export default function SplashScreen({ onSandboxCreated }) {
   const [loadingProjectId, setLoadingProjectId] = useState(null);
   const [error, setError] = useState(null);
   const [title, setTitle] = useState("");
-  const [loadingStep, setLoadingStep] = useState(""); // 'project' | 'sandbox'
+  const [loadingStep, setLoadingStep] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   const [projects, setProjects] = useState([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
 
-  // Fetch existing projects on mount
   useEffect(() => {
     const fetchProjects = async () => {
       try {
@@ -45,7 +49,6 @@ export default function SplashScreen({ onSandboxCreated }) {
     fetchProjects();
   }, []);
 
-  // Launch existing sandbox
   const handleOpenProject = async (projectId, projectTitle) => {
     setLoadingProjectId(projectId);
     setError(null);
@@ -65,7 +68,6 @@ export default function SplashScreen({ onSandboxCreated }) {
     }
   };
 
-  // Create new project then start its sandbox
   const handleCreate = async (customTitle) => {
     const projectTitle = (customTitle || title).trim();
     if (!projectTitle) {
@@ -110,155 +112,274 @@ export default function SplashScreen({ onSandboxCreated }) {
   );
 
   const templates = [
-    { title: "React + Vite App", icon: Code2, desc: "Standard Vite React workspace with Tailwind CSS" },
-    { title: "SaaS Landing Page", icon: Globe, desc: "Modern conversion-focused landing page with animations" },
-    { title: "Interactive Web Game", icon: Sparkles, desc: "Canvas & React-based retro game template" },
-    { title: "Admin Analytics Dashboard", icon: Layers, desc: "Data visualization metrics with dark UI" },
+    {
+      title: "React 19 + Vite",
+      tag: "Starter",
+      icon: Code2,
+      desc: "Fast HMR, Tailwind 4, Lucide icons",
+      color: "from-cyan-500/20 to-blue-500/10 border-cyan-500/20",
+    },
+    {
+      title: "SaaS Landing Page",
+      tag: "Design",
+      icon: Globe,
+      desc: "Hero, dynamic pricing, dark aesthetic",
+      color: "from-purple-500/20 to-indigo-500/10 border-purple-500/20",
+    },
+    {
+      title: "Retro Nokia Game",
+      tag: "Canvas",
+      icon: Sparkles,
+      desc: "LCD canvas grid, state loop, score tracking",
+      color: "from-emerald-500/20 to-teal-500/10 border-emerald-500/20",
+    },
+    {
+      title: "Admin Analytics Pro",
+      tag: "Dashboard",
+      icon: Layers,
+      desc: "Telemetry stats, charts, modular widgets",
+      color: "from-amber-500/20 to-orange-500/10 border-amber-500/20",
+    },
   ];
 
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen w-full bg-[#0a0b10] text-gray-100 p-6 overflow-y-auto select-none">
-      {/* Dynamic Background Glows */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none -translate-x-1/2" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none translate-x-1/2" />
-
-      {/* Header / Brand */}
-      <div className="relative z-10 text-center max-w-2xl mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold mb-4 tracking-wide uppercase">
-          <Cpu className="w-3.5 h-3.5" /> Next-Gen Cloud Code Spaces
-        </div>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-3">
-          AI Cloud <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-indigo-400 to-purple-400">Sandbox</span>
-        </h1>
-        <p className="text-gray-400 text-sm md:text-base leading-relaxed">
-          Spin up isolated Kubernetes React environments with instant live previews, interactive web terminals, and autonomous AI agents.
-        </p>
+    <div className="relative flex flex-col items-center justify-center min-h-screen w-full bg-[#040508] text-slate-100 p-6 overflow-x-hidden overflow-y-auto select-none">
+      {/* Living Mesh Background */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-32 -left-32 w-[600px] h-[600px] bg-cyan-500/[0.08] rounded-full blur-[140px] animate-blob-1" />
+        <div className="absolute top-1/2 -right-48 w-[650px] h-[650px] bg-indigo-600/[0.09] rounded-full blur-[150px] animate-blob-2" />
+        <div className="absolute -bottom-32 left-1/3 w-[550px] h-[550px] bg-purple-600/[0.07] rounded-full blur-[130px]" />
+        
+        {/* Subtle dot matrix grid */}
+        <div
+          className="absolute inset-0 opacity-[0.14]"
+          style={{
+            backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+          }}
+        />
       </div>
 
-      {/* Main Action Container */}
-      <div className="relative z-10 w-full max-w-4xl grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Left Column: Create New Project */}
-        <div className="md:col-span-6 flex flex-col gap-4 p-6 rounded-2xl bg-[#12131c]/90 border border-white/10 backdrop-blur-xl shadow-2xl">
-          <div className="flex items-center gap-2 text-white font-semibold text-lg">
-            <Plus className="w-5 h-5 text-cyan-400" /> Create Workspace
+      {/* Hero Header Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 text-center max-w-2xl mb-10 flex flex-col items-center"
+      >
+        {/* Hero 3D Orb Badge */}
+        <div className="relative mb-5 group">
+          <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-cyan-500 via-indigo-500 to-purple-500 opacity-40 blur-lg group-hover:opacity-75 transition-opacity duration-700" />
+          <img
+            src="/hero-orb.jpg"
+            alt="Cloud Sandbox"
+            className="relative w-20 h-20 rounded-full object-cover border border-white/20 shadow-2xl ring-1 ring-white/10 group-hover:scale-105 transition-transform duration-500"
+          />
+        </div>
+
+        {/* Feature Pill */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/[0.04] border border-white/10 text-xs font-medium text-cyan-300 backdrop-blur-xl mb-4 shadow-inner">
+          <Zap className="w-3.5 h-3.5 text-cyan-400 fill-cyan-400" />
+          <span>Cloud Kubernetes Sandbox Environment</span>
+        </div>
+
+        {/* Title */}
+        <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-white mb-4 leading-none">
+          Code at the speed of{" "}
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-indigo-300 to-purple-300">
+            Thought.
+          </span>
+        </h1>
+
+        <p className="text-slate-400 text-sm md:text-base max-w-lg leading-relaxed font-normal">
+          Instant Kubernetes React spaces with autonomous AI orchestration, live browser previews, and embedded PTY terminals.
+        </p>
+      </motion.div>
+
+      {/* Main Dual Cards Grid */}
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-5xl grid grid-cols-1 md:grid-cols-12 gap-6"
+      >
+        {/* Left Column: Create Workspace */}
+        <div className="md:col-span-6 flex flex-col justify-between p-7 rounded-3xl bg-[#090b12]/75 border border-white/[0.08] backdrop-blur-2xl shadow-2xl glow-border">
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center">
+                  <Plus className="w-4 h-4 text-cyan-400" />
+                </div>
+                <h3 className="text-base font-semibold text-white tracking-tight">
+                  New Sandbox
+                </h3>
+              </div>
+              <span className="text-[11px] font-mono text-cyan-400/80 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">
+                React 19
+              </span>
+            </div>
+
+            <p className="text-xs text-slate-400 mb-5 leading-relaxed">
+              Launch an isolated pod with dedicated port mapping, live Hot-Reloading, and Mistral Agent tools.
+            </p>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCreate();
+              }}
+              className="flex flex-col gap-3.5"
+            >
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="e.g. Neo SaaS Landing, AI Dashboard"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  disabled={loading || loadingProjectId !== null}
+                  className="w-full px-4 py-3.5 rounded-2xl glass-input text-sm text-white placeholder-slate-500 focus:outline-none transition-all duration-300"
+                />
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={loading || !title.trim() || loadingProjectId !== null}
+                className="relative overflow-hidden w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-cyan-500 via-indigo-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-white font-semibold text-sm flex items-center justify-center gap-2.5 shadow-lg shadow-cyan-500/25 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed group"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin text-white" />
+                    <span>
+                      {loadingStep === "project"
+                        ? "Registering Workspace..."
+                        : "Provisioning Kubernetes Pod..."}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 fill-current group-hover:translate-x-0.5 transition-transform" />
+                    <span>Launch Environment</span>
+                  </>
+                )}
+              </motion.button>
+            </form>
           </div>
 
-          <p className="text-xs text-gray-400">
-            Launch a dedicated sandbox pod with Hot-Module Replacement and AI coding support.
-          </p>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleCreate();
-            }}
-            className="flex flex-col gap-3 mt-2"
-          >
-            <input
-              type="text"
-              placeholder="Project Name (e.g. My Portfolio, Snake Game)"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={loading || loadingProjectId !== null}
-              className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
-            />
-
-            <button
-              type="submit"
-              disabled={loading || !title.trim() || loadingProjectId !== null}
-              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-lg shadow-cyan-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  {loadingStep === "project" ? "Creating Project..." : "Spinning up Kubernetes Pod..."}
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4 fill-current" /> Start Instant Sandbox
-                </>
-              )}
-            </button>
-          </form>
-
           {/* Quick Start Templates */}
-          <div className="mt-4 pt-4 border-t border-white/5">
-            <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider block mb-2">
-              Quick Templates
+          <div className="mt-6 pt-5 border-t border-white/[0.06]">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block mb-3">
+              Starter Templates
             </span>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2.5">
               {templates.map((tpl, i) => (
-                <button
+                <motion.button
                   key={i}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
                   onClick={() => handleCreate(tpl.title)}
                   disabled={loading || loadingProjectId !== null}
-                  className="flex items-center gap-2.5 p-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 text-left text-xs text-gray-300 hover:text-white transition-all group"
+                  className={`flex flex-col p-3 rounded-2xl bg-gradient-to-br ${tpl.color} hover:border-white/20 text-left transition-all duration-300 group border`}
                 >
-                  <tpl.icon className="w-4 h-4 text-cyan-400 group-hover:scale-110 transition-transform shrink-0" />
-                  <span className="truncate font-medium">{tpl.title}</span>
-                </button>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <tpl.icon className="w-4 h-4 text-white group-hover:scale-110 transition-transform duration-300" />
+                    <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wider bg-black/40 px-1.5 py-0.5 rounded">
+                      {tpl.tag}
+                    </span>
+                  </div>
+                  <span className="text-xs font-semibold text-white truncate block">
+                    {tpl.title}
+                  </span>
+                  <span className="text-[10px] text-slate-400 truncate mt-0.5">
+                    {tpl.desc}
+                  </span>
+                </motion.button>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Right Column: Existing Projects */}
-        <div className="md:col-span-6 flex flex-col p-6 rounded-2xl bg-[#12131c]/90 border border-white/10 backdrop-blur-xl shadow-2xl">
-          <div className="flex items-center justify-between gap-2 mb-3">
-            <div className="flex items-center gap-2 text-white font-semibold text-lg">
-              <FolderCode className="w-5 h-5 text-indigo-400" /> Recent Projects
+        {/* Right Column: Existing Workspaces */}
+        <div className="md:col-span-6 flex flex-col p-7 rounded-3xl bg-[#090b12]/75 border border-white/[0.08] backdrop-blur-2xl shadow-2xl glow-border">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
+                <FolderCode className="w-4 h-4 text-purple-400" />
+              </div>
+              <h3 className="text-base font-semibold text-white tracking-tight">
+                Workspaces
+              </h3>
             </div>
-            <span className="text-xs text-gray-500 font-mono">
-              {projects.length} Saved
+            <span className="text-xs font-mono text-slate-400 bg-white/[0.04] px-2.5 py-1 rounded-full border border-white/5">
+              {projects.length} saved
             </span>
           </div>
 
+          <p className="text-xs text-slate-400 mb-4">
+            Pick up right where you left off. Reconnect to your active sandboxes.
+          </p>
+
           {/* Search Box */}
-          <div className="relative mb-3">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-500" />
+          <div className="relative mb-3.5">
+            <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-500" />
             <input
               type="text"
-              placeholder="Search your workspaces..."
+              placeholder="Search workspaces by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-black/40 border border-white/10 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-indigo-500 transition-all"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-xs text-white placeholder-slate-500 focus:outline-none transition-all duration-300"
             />
           </div>
 
-          {/* Projects List */}
-          <div className="flex-1 overflow-y-auto max-h-64 space-y-2 pr-1">
+          {/* Workspaces Scroll List */}
+          <div className="flex-1 overflow-y-auto max-h-[300px] space-y-2 pr-1">
             {projectsLoading ? (
-              <div className="flex items-center justify-center py-10 text-gray-500 gap-2 text-xs">
-                <Loader2 className="w-4 h-4 animate-spin" /> Loading your workspaces...
+              <div className="flex flex-col items-center justify-center py-16 text-slate-500 gap-2.5 text-xs">
+                <Loader2 className="w-5 h-5 animate-spin text-indigo-400" />
+                <span>Loading your clusters...</span>
               </div>
             ) : filteredProjects.length === 0 ? (
-              <div className="text-center py-10 text-gray-500 text-xs">
-                No matching projects found. Create one to get started!
+              <div className="flex flex-col items-center justify-center py-16 text-center text-slate-500 text-xs px-4">
+                <Box className="w-8 h-8 text-slate-600 mb-2" />
+                <span className="font-medium text-slate-400">No workspaces found</span>
+                <span className="text-[11px] text-slate-500 mt-0.5">
+                  Launch a new one on the left to start coding!
+                </span>
               </div>
             ) : (
               filteredProjects.map((p) => {
                 const pId = p._id || p.id;
-                const pName = p.title || p.name || "Untitled Project";
+                const pName = p.title || p.name || "Untitled Workspace";
                 const isOpening = loadingProjectId === pId;
 
                 return (
-                  <div
+                  <motion.div
                     key={pId}
-                    className="flex items-center justify-between p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.06] border border-white/5 transition-all group"
+                    whileHover={{ scale: 1.01 }}
+                    className="flex items-center justify-between p-3.5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] border border-white/[0.05] hover:border-white/[0.12] transition-all duration-300 group"
                   >
-                    <div className="flex flex-col min-w-0 pr-2">
-                      <span className="text-sm font-medium text-gray-200 group-hover:text-white truncate">
-                        {pName}
-                      </span>
-                      <span className="text-[10px] font-mono text-gray-500 truncate">
-                        ID: {pId}
-                      </span>
+                    <div className="flex items-center gap-3 min-w-0 pr-2">
+                      <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">
+                        <Code2 className="w-3.5 h-3.5 text-indigo-400" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-medium text-slate-200 group-hover:text-white truncate">
+                          {pName}
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500 truncate">
+                          {pId}
+                        </span>
+                      </div>
                     </div>
 
-                    <button
+                    <motion.button
+                      whileHover={{ scale: 1.04 }}
+                      whileTap={{ scale: 0.96 }}
                       onClick={() => handleOpenProject(pId, pName)}
                       disabled={loading || loadingProjectId !== null}
-                      className="px-3 py-1.5 rounded-lg bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all shrink-0 disabled:opacity-50"
+                      className="px-3 py-1.5 rounded-xl bg-indigo-500/20 hover:bg-indigo-500 text-indigo-300 hover:text-white text-xs font-semibold flex items-center gap-1.5 transition-all duration-300 shrink-0 shadow-sm disabled:opacity-40"
                     >
                       {isOpening ? (
                         <>
@@ -267,25 +388,32 @@ export default function SplashScreen({ onSandboxCreated }) {
                         </>
                       ) : (
                         <>
-                          <span>Launch</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
+                          <span>Resume</span>
+                          <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                         </>
                       )}
-                    </button>
-                  </div>
+                    </motion.button>
+                  </motion.div>
                 );
               })
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Error Alert */}
-      {error && (
-        <div className="relative z-10 mt-6 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs max-w-lg text-center">
-          {error}
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="relative z-20 mt-6 px-4 py-3 rounded-2xl bg-red-500/10 border border-red-500/25 text-red-400 text-xs max-w-lg text-center backdrop-blur-xl shadow-xl"
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

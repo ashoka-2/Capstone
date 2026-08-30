@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import {
   Save,
   Copy,
@@ -6,6 +7,7 @@ import {
   FileCode,
   Loader2,
   AlertCircle,
+  FileCheck,
 } from "lucide-react";
 
 export default function FileViewer({ agentBase, activeFile, onFileSaved }) {
@@ -75,9 +77,14 @@ export default function FileViewer({ agentBase, activeFile, onFileSaved }) {
 
   if (!activeFile) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-[#0d0e15] text-gray-500 text-xs p-6 select-none">
-        <FileCode className="w-10 h-10 text-gray-600 mb-2" />
-        <span>Select a file from the explorer to view or edit</span>
+      <div className="flex-1 flex flex-col items-center justify-center bg-[#07080e] text-slate-500 text-xs p-6 select-none">
+        <div className="w-12 h-12 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-center mb-3">
+          <FileCode className="w-6 h-6 text-slate-600" />
+        </div>
+        <span className="font-medium text-slate-400">No file selected</span>
+        <span className="text-[11px] text-slate-600 mt-0.5">
+          Select a file from the explorer to view or edit code
+        </span>
       </div>
     );
   }
@@ -85,14 +92,19 @@ export default function FileViewer({ agentBase, activeFile, onFileSaved }) {
   const lines = content.split("\n");
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#0d0e15] overflow-hidden">
+    <div className="flex-1 flex flex-col h-full bg-[#07080e] overflow-hidden">
       {/* File Header Bar */}
-      <div className="h-10 px-4 bg-[#12131d] border-b border-white/10 flex items-center justify-between shrink-0 select-none">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-cyan-400">{activeFile}</span>
-          {isDirty && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+      <div className="h-10 px-4 bg-[#0a0c13] border-b border-white/[0.07] flex items-center justify-between shrink-0 select-none">
+        <div className="flex items-center gap-2.5">
+          <FileCode className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="text-xs font-mono text-slate-200">{activeFile}</span>
+          {isDirty ? (
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 animate-pulse">
               Modified
+            </span>
+          ) : (
+            <span className="flex items-center gap-1 text-[10px] font-mono text-slate-500">
+              <FileCheck className="w-3 h-3 text-emerald-500/70" /> Saved
             </span>
           )}
         </div>
@@ -100,7 +112,7 @@ export default function FileViewer({ agentBase, activeFile, onFileSaved }) {
         <div className="flex items-center gap-2">
           <button
             onClick={handleCopy}
-            className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
             title="Copy Code"
           >
             {copied ? (
@@ -110,10 +122,12 @@ export default function FileViewer({ agentBase, activeFile, onFileSaved }) {
             )}
           </button>
 
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
             onClick={handleSave}
             disabled={saving || !isDirty}
-            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-cyan-500 hover:bg-cyan-400 disabled:opacity-30 disabled:hover:bg-cyan-500 text-black font-semibold text-xs transition-all shadow-sm shadow-cyan-500/20"
+            className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 disabled:opacity-30 disabled:hover:from-cyan-500 text-white font-semibold text-xs transition-all shadow-md shadow-cyan-500/20"
           >
             {saving ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -121,15 +135,16 @@ export default function FileViewer({ agentBase, activeFile, onFileSaved }) {
               <Save className="w-3.5 h-3.5" />
             )}
             <span>Save</span>
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {/* Editor Content */}
       <div className="flex-1 relative flex overflow-hidden font-mono text-xs">
         {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#0d0e15]/80 gap-2 text-gray-400">
-            <Loader2 className="w-4 h-4 animate-spin text-cyan-400" /> Loading file content...
+          <div className="absolute inset-0 flex items-center justify-center bg-[#07080e]/90 gap-2 text-slate-400">
+            <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+            <span>Reading file from cluster...</span>
           </div>
         ) : error ? (
           <div className="p-4 text-red-400 flex items-center gap-2">
@@ -138,7 +153,7 @@ export default function FileViewer({ agentBase, activeFile, onFileSaved }) {
         ) : (
           <div className="flex-1 flex overflow-auto">
             {/* Line Numbers */}
-            <div className="py-3 px-3 bg-[#0a0b10] border-r border-white/5 text-gray-600 text-right select-none select-none font-mono">
+            <div className="py-3 px-3 bg-[#05060a] border-r border-white/[0.04] text-slate-600 text-right select-none font-mono">
               {lines.map((_, i) => (
                 <div key={i} className="leading-5 text-[11px]">
                   {i + 1}
@@ -146,12 +161,12 @@ export default function FileViewer({ agentBase, activeFile, onFileSaved }) {
               ))}
             </div>
 
-            {/* Code Input Area */}
+            {/* Code Textarea */}
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
               spellCheck="false"
-              className="flex-1 p-3 bg-transparent text-gray-200 resize-none focus:outline-none font-mono text-xs leading-5 whitespace-pre tab-4"
+              className="flex-1 p-3 bg-transparent text-slate-200 resize-none focus:outline-none font-mono text-xs leading-5 whitespace-pre tab-4 selection:bg-cyan-500/30"
               style={{ tabSize: 2 }}
             />
           </div>
