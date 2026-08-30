@@ -1,133 +1,126 @@
 import axios from "axios";
-
 import { tool } from "langchain";
 import * as z from "zod";
 
 export const listFiles = tool(
-  async ({}) => {
-    console.log("=======================================================");
-    console.log("Listing the files in project");
-    console.log("=======================================================");
+  async ({}, config) => {
+    const writer = config?.writer;
+    if (writer) writer("Listing files in the directory...\n");
 
     const response = await axios.get(
-      "http://01a033a4-3631-742f-870d-4d0e52684b8a.agent.localhost/list-files",
+      `http://sandbox-service-${config.context.projectId}:3000/list-files`,
     );
 
-    console.log("=======================================================");
-    console.log("Response from list files tool. ", response.data);
-    console.log("=======================================================");
+    if (writer) {
+      writer(
+        "Files listed successfully!\nFiles:\n" +
+          response.data.files.join(",") +
+          "\n",
+      );
+    }
+
     return JSON.stringify(response.data.files);
   },
   {
-    name: "list-files",
+    name: "list_files",
     description:
-      "lists the files in the project directory.This is useful for understanding what files are available to work with.",
-    inputSchema: z.object({}),
+      "List all the files in the project directory. This is useful for understanding what files are available to work with.",
+    schema: z.object({}),
   },
 );
 
 export const readFiles = tool(
-  async ({ paths, files }) => {
-    const fileList = paths || files || [];
-    console.log("=======================================================");
-    console.log("Reading files:", fileList);
-    console.log("=======================================================");
+  async ({ files = [] }, config) => {
+    const writer = config?.writer;
+    if (writer) writer("Reading files..." + files.join(",") + "\n");
 
     const response = await axios.get(
-      "http://01a033a4-3631-742f-870d-4d0e52684b8a.agent.localhost/read-files?files=" +
-        fileList.join(","),
+      `http://sandbox-service-${config.context.projectId}:3000/read-files?files=` +
+        files.join(","),
     );
 
-    console.log("=======================================================");
-    console.log("Response from read files tool:", response.data);
-    console.log("=======================================================");
-    return JSON.stringify(response.data.files);
+    if (writer) writer("Files read successfully!\n");
+
+    return JSON.stringify(response.data);
   },
   {
-    name: "read-files",
+    name: "read_files",
     description:
       "Read the contents of specified files. This is useful for understanding the content of files that are relevant to the task at hand.",
-    inputSchema: z.object({
-      paths: z
+    schema: z.object({
+      files: z
         .array(z.string())
         .describe(
-          "The list of file relative paths to read. These should be files that were listed using the 'list-files' tool or created later by 'update-files' tool.",
+          "The list of files absolute paths to read. These should be files that were listed using the list_files tool or created later",
         ),
     }),
   },
 );
 
 export const updateFiles = tool(
-  async ({ updates, files }) => {
-    const updateList = updates || files || [];
-    console.log("=======================================================");
-    console.log(
-      "Updating files:",
-      updateList.map((u) => u.file),
-    );
-    console.log("=======================================================");
+  async ({ files }, config) => {
+    const writer = config?.writer;
+    if (writer) writer("Updating files..." + files.map((f) => f.file).join(",") + "\n");
 
     const response = await axios.patch(
-      "http://01a033a4-3631-742f-870d-4d0e52684b8a.agent.localhost/update-files",
+      `http://sandbox-service-${config.context.projectId}:3000/update-files`,
       {
-        updates: updateList,
+        updates: files,
       },
     );
 
-    console.log("=======================================================");
-    console.log("Response from update files tool:", response.data);
-    console.log("=======================================================");
+    if (writer) writer("Files updated successfully!\n");
+
     return JSON.stringify(response.data.results);
   },
   {
-    name: "update-files",
+    name: "update_files",
     description:
-      "Update the contents of specified files. This is useful for making changes to files that are relevant to the task at hand. Also this tool can be used to create files by providing a new file name in the file field and the content to be added in content field.",
-    inputSchema: z.object({
-      updates: z
+      "Update the contents of specified files. This is useful for making changes to files based on the requirements of the task at hand. this tool can also use to create new files by providing a new file name in the file field and the content to be added in the content field.",
+    schema: z.object({
+      files: z
         .array(
           z.object({
             file: z
               .string()
-              .describe("The relative path to the file to update."),
-            content: z.string().describe("The new content for the file."),
+              .describe("The absolute path of the file to update"),
+            content: z
+              .string()
+              .describe(
+                "The new content for the file, the content should support json format.",
+              ),
           }),
         )
-        .describe(
-          "The list of files to update. These should be files that were listed using the 'list-files' tool or created later by 'update-files' tool.",
-        ),
+        .describe("The list of files to update and their new contents"),
     }),
   },
 );
 
 export const deleteFiles = tool(
-  async ({ paths, files }) => {
-    const deleteList = paths || files || [];
-    console.log("=======================================================");
-    console.log("Deleting files/folders:", deleteList);
-    console.log("=======================================================");
+  async ({ files = [] }, config) => {
+    const writer = config?.writer;
+    if (writer) writer("Deleting files..." + files.join(",") + "\n");
 
     const response = await axios.delete(
-      "http://01a033a4-3631-742f-870d-4d0e52684b8a.agent.localhost/delete",
+      `http://sandbox-service-${config.context.projectId}:3000/delete`,
       {
-        data: { paths: deleteList },
+        data: { paths: files },
       },
     );
 
-    console.log("=======================================================");
-    console.log("Response from delete files tool:", response.data);
-    console.log("=======================================================");
+    if (writer) writer("Files deleted successfully!\n");
+
     return JSON.stringify(response.data.results);
   },
   {
-    name: "delete-files",
+    name: "delete_files",
     description:
       "Delete specified files or folders. This is useful for removing files that are no longer needed.",
-    inputSchema: z.object({
-      paths: z
+    schema: z.object({
+      files: z
         .array(z.string())
         .describe(
-          "The list of relative paths to delete. These should be files or folders that were listed using the 'list-files' tool or created later by 'update-files' tool.",
+          "The list of absolute paths to delete. These should be files or folders that were listed using the list_files tool or created later",
         ),
     }),
   },

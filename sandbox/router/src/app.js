@@ -1,6 +1,5 @@
 import express from "express";
 import morgan from "morgan";
-
 import { createProxyMiddleware } from "http-proxy-middleware";
 
 const app = express();
@@ -22,7 +21,7 @@ app.get("/api/status/readyz", (req, res) => {
 const proxies = {};
 const agentProxies = {};
 
-function getProxy(sandboxId) {
+export function getProxy(sandboxId) {
   const target = `http://sandbox-service-${sandboxId}`;
 
   if (!proxies[sandboxId]) {
@@ -35,7 +34,7 @@ function getProxy(sandboxId) {
   return proxies[sandboxId];
 }
 
-function getAgentProxy(sandboxId) {
+export function getAgentProxy(sandboxId) {
   const target = `http://sandbox-service-${sandboxId}:3000`;
 
   if (!agentProxies[sandboxId]) {
@@ -49,19 +48,17 @@ function getAgentProxy(sandboxId) {
 }
 
 app.use((req, res, next) => {
-  const host = req.headers.host;
+  const host = req.headers.host || "";
   const sandboxId = host.split(".")[0];
+  const type = host.split(".")[1];
 
-if(host.split('.')[1]==="agent"){
-  
-  return getAgentProxy(sandboxId)(req, res, next);
-}
-else if(host.split('.')[1]==="preview"){
-
-  return getProxy(sandboxId)(req, res, next);
-}
-  
-
+  if (type === "agent") {
+    return getAgentProxy(sandboxId)(req, res, next);
+  } else if (type === "preview") {
+    return getProxy(sandboxId)(req, res, next);
+  } else {
+    res.status(404).send("Invalid Host");
+  }
 });
 
 export default app;
