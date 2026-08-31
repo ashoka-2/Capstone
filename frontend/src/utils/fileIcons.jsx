@@ -59,7 +59,12 @@ export function getFileIcon(filename, isFolder = false, isOpen = false) {
     lower.endsWith(".svg") ||
     lower.endsWith(".webp") ||
     lower.endsWith(".gif") ||
-    lower.endsWith(".ico")
+    lower.endsWith(".ico") ||
+    lower.endsWith(".bmp") ||
+    lower.endsWith(".avif") ||
+    lower.endsWith(".tiff") ||
+    lower.endsWith(".tif") ||
+    lower.endsWith(".jfif")
   ) {
     return <FileImage className="w-4 h-4 text-purple-400 shrink-0" />;
   }
@@ -84,14 +89,19 @@ export function getFileIcon(filename, isFolder = false, isOpen = false) {
 
 export function isImageFile(filename) {
   if (!filename) return false;
-  const lower = filename.toLowerCase();
+  const clean = filename.split("?")[0].toLowerCase().trim();
   return (
-    lower.endsWith(".png") ||
-    lower.endsWith(".jpg") ||
-    lower.endsWith(".jpeg") ||
-    lower.endsWith(".svg") ||
-    lower.endsWith(".webp") ||
-    lower.endsWith(".gif") ||
-    lower.endsWith(".ico")
+    clean.endsWith(".png") ||
+    clean.endsWith(".jpg") ||
+    clean.endsWith(".jpeg") ||
+    clean.endsWith(".svg") ||
+    clean.endsWith(".webp") ||
+    clean.endsWith(".gif") ||
+    clean.endsWith(".ico") ||
+    clean.endsWith(".bmp") ||
+    clean.endsWith(".avif") ||
+    clean.endsWith(".tiff") ||
+    clean.endsWith(".tif") ||
+    clean.endsWith(".jfif")
   );
 }

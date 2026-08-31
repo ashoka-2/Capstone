@@ -43,6 +43,28 @@ app.get("/", (req, res) => {
   });
 });
 
+// Serve static workspace files directly
+app.use("/workspace", express.static(WORKING_DIR));
+app.use("/raw", express.static(WORKING_DIR));
+app.use(express.static(WORKING_DIR));
+
+// Dedicated endpoint to stream/send raw file with correct MIME type
+app.get("/raw-file", (req, res) => {
+  const file = req.query.file;
+  if (!file) {
+    return res.status(400).json({ status: "error", message: "No file specified" });
+  }
+  const cleanPath = file.replace(/^\/+/, "");
+  const filePath = path.join(WORKING_DIR, cleanPath);
+  if (!filePath.startsWith(WORKING_DIR)) {
+    return res.status(403).json({ status: "error", message: "Access denied" });
+  }
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ status: "error", message: "File not found" });
+  }
+  res.sendFile(filePath);
+});
+
 
 
 const shell =   process.env.SHELL || "bash";
@@ -85,10 +107,10 @@ app.get("/list-files", async (req, res) => {
     const files = [];
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
-      const relativePath = path.relative(baseDir, fullPath);
+      const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, "/");
       if (
         entry.isDirectory() &&
-        ["node_modules", ".git", "dist"].includes(entry.name)
+        ["node_modules", ".git", "dist", ".cache"].includes(entry.name)
       ) {
         continue;
       }
@@ -132,16 +154,57 @@ app.get("/read-files", async (req, res) => {
 
   const results = await Promise.all(
     fileList.map(async (file) => {
-      const filePath = path.join(WORKING_DIR, file);
+      const cleanFile = file.replace(/\\/g, "/").replace(/^\/+/, "");
+      let targetPath = path.join(WORKING_DIR, cleanFile);
+
+      // Fallback search in public or src if not found directly
+      if (!fs.existsSync(targetPath)) {
+        const candidates = [
+          path.join(WORKING_DIR, "public", cleanFile),
+          path.join(WORKING_DIR, "src", cleanFile),
+          path.join(WORKING_DIR, "src/assets", cleanFile),
+        ];
+        for (const cand of candidates) {
+          if (fs.existsSync(cand)) {
+            targetPath = cand;
+            break;
+          }
+        }
+      }
+
+      const relativeKey = "/" + cleanFile;
+      const ext = path.extname(cleanFile).toLowerCase();
+
       try {
-        const content = await fs.promises.readFile(filePath, "utf-8");
-        return {
-          [filePath.replace(WORKING_DIR, "")]: content,
-        };
+        const imageExts = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".bmp", ".avif", ".tiff", ".tif", ".jfif"];
+        if (imageExts.includes(ext)) {
+          const mimeTypes = {
+            ".png": "image/png",
+            ".jpg": "image/jpeg",
+            ".jpeg": "image/jpeg",
+            ".gif": "image/gif",
+            ".webp": "image/webp",
+            ".ico": "image/x-icon",
+            ".bmp": "image/bmp",
+            ".avif": "image/avif",
+            ".tiff": "image/tiff",
+            ".tif": "image/tiff",
+            ".jfif": "image/jpeg",
+          };
+          const buffer = await fs.promises.readFile(targetPath);
+          const mime = mimeTypes[ext] || "application/octet-stream";
+          return {
+            [relativeKey]: `data:${mime};base64,${buffer.toString("base64")}`,
+          };
+        } else {
+          const content = await fs.promises.readFile(targetPath, "utf-8");
+          return {
+            [relativeKey]: content,
+          };
+        }
       } catch (err) {
         return {
-          [filePath.replace(WORKING_DIR, "")]:
-            `Error reading file : ${err.message}`,
+          [relativeKey]: `Error reading file : ${err.message}`,
         };
       }
     }),
