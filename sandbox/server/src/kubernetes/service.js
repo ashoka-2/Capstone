@@ -34,11 +34,24 @@ export const createService = async (sandboxId)=>{
         }
     }
 
-    const response = await k8sCoreV1Api.createNamespacedService({
-        namespace: "default",
-        body:serviceManifest
-    })
-    return response;
+    try {
+        const response = await k8sCoreV1Api.createNamespacedService({
+            namespace: "default",
+            body: serviceManifest
+        });
+        return response;
+    } catch (err) {
+        if (
+            err.response?.statusCode === 409 ||
+            err.statusCode === 409 ||
+            err.message?.includes("AlreadyExists") ||
+            err.body?.reason === "AlreadyExists"
+        ) {
+            console.log(`Service sandbox-service-${sandboxId} already exists, reusing.`);
+            return { body: { metadata: { name: `sandbox-service-${sandboxId}` } } };
+        }
+        throw err;
+    }
 }
 
 export const deleteService = async (sandboxId) => {

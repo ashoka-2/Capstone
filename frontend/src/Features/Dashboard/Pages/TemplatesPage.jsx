@@ -17,6 +17,8 @@ import { useProjects } from "../Hooks/useProjects.js";
 import { useSandbox } from "../../Workspace/Hooks/useSandbox.js";
 import { addToast } from "../../../utils/toast.slice.js";
 
+import { projectService } from "../Services/project.api.js";
+
 export default function TemplatesPage() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -37,51 +39,35 @@ export default function TemplatesPage() {
   const templates = [
     {
       id: "canva-design",
-      title: "canva-design",
+      title: "Canva Design Editor",
       category: "apps",
       tag: "Fullstack",
-      desc: "Interactive canvas editor with drag-and-drop elements, layers, and export tools.",
+      desc: "Build an interactive canvas design tool with draggable elements, color palette selection, layer management, and PNG export.",
       color: "from-blue-600/30 via-indigo-600/20 to-purple-600/30",
     },
     {
-      id: "flutter-forge-friendly",
-      title: "flutter-forge-friendly",
-      category: "apps",
-      tag: "Mobile",
-      desc: "Cross-platform mobile UI simulator and component catalog with live state switching.",
-      color: "from-cyan-600/30 via-teal-600/20 to-emerald-600/30",
-    },
-    {
       id: "retro-nokia-snake",
-      title: "retro-nokia-snake",
+      title: "Retro Nokia Snake Game",
       category: "games",
       tag: "Canvas Game",
-      desc: "Monochrome LCD retro Nokia 3310 snake game with high scores and keyboard controls.",
+      desc: "Create a complete retro Nokia 3310 snake game on canvas with LCD pixel styling, sound effects toggle, score counter, and difficulty levels.",
       color: "from-emerald-600/30 via-teal-600/20 to-cyan-600/30",
     },
     {
       id: "saas-landing-dark",
-      title: "saas-landing-dark",
+      title: "SaaS Landing Page",
       category: "landing",
       tag: "Landing",
-      desc: "High-conversion SaaS product landing page with animated gradients and pricing calculator.",
+      desc: "Generate a sleek dark-themed SaaS landing page with animated feature cards, pricing toggle calculator, customer testimonials, and FAQ accordion.",
       color: "from-purple-600/30 via-indigo-600/20 to-pink-600/30",
     },
     {
       id: "crypto-analytics-dashboard",
-      title: "crypto-analytics-dashboard",
+      title: "Crypto Telemetry Dashboard",
       category: "dashboards",
       tag: "Dashboard",
-      desc: "Real-time telemetry and financial market dashboard with sleek dark charts.",
+      desc: "Build a real-time crypto telemetry analytics dashboard with interactive price charts, portfolio metrics, top gainers list, and dark modern aesthetics.",
       color: "from-amber-600/30 via-orange-600/20 to-red-600/30",
-    },
-    {
-      id: "portfolio-minimalist",
-      title: "portfolio-minimalist",
-      category: "landing",
-      tag: "Portfolio",
-      desc: "Minimalist modern designer portfolio with project galleries and contact form.",
-      color: "from-slate-600/30 via-zinc-600/20 to-stone-600/30",
     },
   ];
 
@@ -95,7 +81,7 @@ export default function TemplatesPage() {
 
       dispatch(
         addToast({
-          message: `Launching "${tpl.title}" template...`,
+          message: `Launching "${tpl.title}" and instructing AI to build...`,
           type: "info",
         })
       );
@@ -104,14 +90,22 @@ export default function TemplatesPage() {
       if (!sandboxRes.success) throw new Error(sandboxRes.error);
       const sandbox = sandboxRes.data;
 
+      await projectService.updateProjectSandboxId(projId, sandbox.sandboxId);
+
       dispatch(
         addToast({
-          message: `Template "${tpl.title}" launched successfully!`,
+          message: `Workspace "${tpl.title}" is ready!`,
           type: "success",
         })
       );
 
-      navigate(`/workspace/${sandbox.sandboxId}`);
+      navigate(`/workspace/${sandbox.sandboxId}`, {
+        state: {
+          initialPrompt: tpl.desc,
+          projectId: projId,
+          projectTitle: tpl.title,
+        },
+      });
     } catch (err) {
       dispatch(
         addToast({

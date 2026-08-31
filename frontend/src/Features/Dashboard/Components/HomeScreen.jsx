@@ -158,7 +158,7 @@ export default function HomeScreen({
         <div className="w-full flex flex-col space-y-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/[0.07] pb-3">
             <div className="flex items-center gap-1 bg-[#090b12] p-1 rounded-2xl border border-white/[0.06]">
-              {["my-projects", "recently-viewed", "templates"].map((tab) => (
+              {["my-projects", "recently-viewed"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -173,46 +173,13 @@ export default function HomeScreen({
               ))}
             </div>
 
-            <button className="flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-cyan-300 transition-colors">
-              <span>Browse all</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
+            <span className="text-xs font-medium text-slate-400">
+              {filteredProjects.length} {filteredProjects.length === 1 ? "project" : "projects"}
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {activeTab === "templates" ? (
-              templates.map((tpl) => (
-                <motion.div
-                  key={tpl.id}
-                  whileHover={{ y: -4 }}
-                  onClick={() => onCreateProject(tpl.title)}
-                  className="flex flex-col rounded-3xl bg-[#090b12] border border-white/[0.07] hover:border-white/[0.18] overflow-hidden cursor-pointer transition-all duration-300 group shadow-xl"
-                >
-                  <div
-                    className={`h-44 w-full bg-gradient-to-tr ${tpl.color} relative p-4 flex flex-col justify-between`}
-                  >
-                    <span className="self-start px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-md text-[10px] font-semibold text-white border border-white/10">
-                      {tpl.tag}
-                    </span>
-                    <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                      <Sparkles className="w-3.5 h-3.5 text-white" />
-                    </div>
-                  </div>
-
-                  <div className="p-4 flex flex-col">
-                    <span className="text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors">
-                      {tpl.title}
-                    </span>
-                    <span className="text-xs text-slate-400 line-clamp-2 mt-1">
-                      {tpl.desc}
-                    </span>
-                    <span className="text-[10px] font-mono text-slate-500 mt-3">
-                      {tpl.date}
-                    </span>
-                  </div>
-                </motion.div>
-              ))
-            ) : projectsLoading ? (
+            {projectsLoading ? (
               <div className="col-span-full py-16 flex flex-col items-center justify-center text-slate-500 text-xs gap-2">
                 <Loader2 className="w-5 h-5 animate-spin text-cyan-400" />
                 <span>Loading your projects...</span>

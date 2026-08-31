@@ -17,6 +17,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useProjects } from "../Hooks/useProjects.js";
+import { projectService } from "../Services/project.api.js";
 import { useSandbox } from "../../Workspace/Hooks/useSandbox.js";
 import { SkeletonProjectList } from "../../../Components/SkeletonLoader.jsx";
 import { addToast } from "../../../utils/toast.slice.js";
@@ -58,6 +59,9 @@ export default function DashboardPage({ userName = "Ashok" }) {
       if (!sandboxRes.success) throw new Error(sandboxRes.error);
       const sandbox = sandboxRes.data;
 
+      // Save sandboxId with project metadata
+      await projectService.updateProjectSandboxId(projId, sandbox.sandboxId);
+
       dispatch(
         addToast({
           message: `Workspace "${title}" is ready!`,
@@ -82,9 +86,18 @@ export default function DashboardPage({ userName = "Ashok" }) {
 
   const handleOpenExisting = async (projectId, projectTitle) => {
     try {
-      const sandboxRes = await startSandbox(projectId, projectTitle);
+      const proj = filteredProjects.find((p) => (p._id || p.id) === projectId);
+      const sandboxRes = await startSandbox(
+        projectId,
+        projectTitle,
+        proj?.sandboxId
+      );
       if (!sandboxRes.success) throw new Error(sandboxRes.error);
       const sandbox = sandboxRes.data;
+
+      if (proj && !proj.sandboxId && sandbox.sandboxId) {
+        projectService.updateProjectSandboxId(projectId, sandbox.sandboxId);
+      }
 
       navigate(`/workspace/${sandbox.sandboxId}`, {
         state: { projectId, projectTitle },
@@ -319,15 +332,13 @@ export default function DashboardPage({ userName = "Ashok" }) {
               }}
             >
               {[
-                { id: "search", label: "Search" },
                 { id: "my-projects", label: "My projects" },
                 { id: "recently-viewed", label: "Recently viewed" },
-                { id: "templates", label: "Lovable templates" },
               ].map(({ id, label }) => (
                 <button
                   key={id}
                   onClick={() => setActiveTab(id)}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
                   style={{
                     backgroundColor:
                       activeTab === id ? "hsl(var(--card))" : "transparent",
@@ -341,14 +352,12 @@ export default function DashboardPage({ userName = "Ashok" }) {
                 </button>
               ))}
             </div>
-            <button
-              onClick={() => navigate("/templates")}
-              className="flex items-center gap-1.5 text-xs font-medium transition-colors hover:opacity-80"
+            <span
+              className="text-xs font-medium"
               style={{ color: "hsl(var(--muted-foreground))" }}
             >
-              <span>Browse all</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </button>
+              {filteredProjects.length} {filteredProjects.length === 1 ? "project" : "projects"}
+            </span>
           </div>
 
           {/* Cards Grid */}

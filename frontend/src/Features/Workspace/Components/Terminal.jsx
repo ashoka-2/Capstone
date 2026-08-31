@@ -3,7 +3,7 @@ import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { io } from "socket.io-client";
-import { Terminal as TermIcon, Trash2, Circle, Sparkles } from "lucide-react";
+import { Terminal as TermIcon, Trash2, Circle, Sparkles, RefreshCw } from "lucide-react";
 
 export default function Terminal({ agentBase, height = 220, onResize }) {
   const terminalRef = useRef(null);
@@ -43,7 +43,9 @@ export default function Terminal({ agentBase, height = 220, onResize }) {
     term.loadAddon(new WebLinksAddon());
 
     term.open(terminalRef.current);
-    fitAddon.fit();
+    try {
+      fitAddon.fit();
+    } catch {}
 
     xtermInstance.current = term;
     fitAddonRef.current = fitAddon;
@@ -51,8 +53,11 @@ export default function Terminal({ agentBase, height = 220, onResize }) {
     term.writeln("\x1b[36m⚡ Connecting to sandbox container terminal...\x1b[0m");
 
     const socket = io(agentBase, {
-      transports: ["websocket", "polling"],
-      reconnectionAttempts: 5,
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionDelay: 2000,
+      reconnectionAttempts: 15,
+      timeout: 8000,
     });
     socketRef.current = socket;
 
@@ -67,15 +72,16 @@ export default function Terminal({ agentBase, height = 220, onResize }) {
 
     socket.on("disconnect", () => {
       setStatus("disconnected");
-      term.writeln("\r\n\x1b[31m✖ Container terminal disconnected.\x1b[0m");
     });
 
     socket.on("connect_error", () => {
-      setStatus("disconnected");
+      setStatus("connecting");
     });
 
     const disposable = term.onData((data) => {
-      socket.emit("terminal-input", data);
+      if (socket.connected) {
+        socket.emit("terminal-input", data);
+      }
     });
 
     const handleResize = () => {
@@ -87,21 +93,37 @@ export default function Terminal({ agentBase, height = 220, onResize }) {
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      disposable.dispose();
-      socket.disconnect();
-      term.dispose();
+      try {
+        disposable.dispose();
+      } catch {}
+      try {
+        socket.removeAllListeners();
+        socket.disconnect();
+      } catch {}
+      try {
+        term.dispose();
+      } catch {}
     };
   }, [agentBase]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fitAddonRef.current?.fit();
+      try {
+        fitAddonRef.current?.fit();
+      } catch {}
     }, 100);
     return () => clearTimeout(timer);
   }, [height]);
 
   const handleClear = () => {
     xtermInstance.current?.clear();
+  };
+
+  const handleReconnect = () => {
+    setStatus("connecting");
+    if (socketRef.current) {
+      socketRef.current.connect();
+    }
   };
 
   return (
@@ -118,20 +140,31 @@ export default function Terminal({ agentBase, height = 220, onResize }) {
             <Circle
               className={`w-1.5 h-1.5 fill-current ${
                 status === "connected"
-                  ? "text-emerald-400 animate-pulse"
+                  ? "text-emerald-400"
                   : status === "connecting"
                   ? "text-amber-400 animate-pulse"
                   : "text-red-400"
               }`}
             />
-            <span className="text-[10px] font-mono capitalize text-slate-400">{status}</span>
+            <span className="text-[10px] font-mono capitalize">
+              {status === "connecting" ? "Starting PTY..." : status}
+            </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          {status === "disconnected" && (
+            <button
+              onClick={handleReconnect}
+              className="p-1 hover:text-white transition-colors flex items-center gap-1 text-[11px]"
+              title="Reconnect Terminal"
+            >
+              <RefreshCw className="w-3 h-3" /> Reconnect
+            </button>
+          )}
           <button
             onClick={handleClear}
-            className="p-1 hover:text-white rounded-lg hover:bg-white/5 transition-colors"
+            className="p-1 hover:text-white transition-colors"
             title="Clear Terminal"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -139,8 +172,8 @@ export default function Terminal({ agentBase, height = 220, onResize }) {
         </div>
       </div>
 
-      {/* Terminal Canvas */}
-      <div ref={terminalRef} className="flex-1 w-full p-2.5 overflow-hidden" />
+      {/* Terminal Output Body */}
+      <div className="flex-1 p-2 overflow-hidden" ref={terminalRef} />
     </div>
   );
 }

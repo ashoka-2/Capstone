@@ -2,10 +2,10 @@ import { request } from "../../../utils/api.js";
 
 export const sandboxService = {
   // Real endpoint on sandbox-server: POST /api/sandbox/start
-  async startSandbox(projectId) {
+  async startSandbox(projectId, sandboxId = null) {
     const data = await request("/api/sandbox/start", {
       method: "POST",
-      body: JSON.stringify({ projectId }),
+      body: JSON.stringify({ projectId, sandboxId }),
     });
     return data;
   },

@@ -42,6 +42,19 @@ export const projectService = {
     return newProject;
   },
 
+  async updateProjectSandboxId(projectId, sandboxId) {
+    try {
+      const existing = await this.getProjects();
+      const updated = existing.map((p) =>
+        (p.id || p._id) === projectId ? { ...p, sandboxId } : p
+      );
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
   async deleteProject(id) {
     try {
       // 1. Delete pod and service from cluster if sandbox exists

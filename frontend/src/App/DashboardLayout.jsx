@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, Outlet } from "react-router-dom";
 import Sidebar from "../Shared/Sidebar.jsx";
 import { useProjects } from "../Features/Dashboard/Hooks/useProjects.js";
+import { projectService } from "../Features/Dashboard/Services/project.api.js";
 import { useSandbox } from "../Features/Workspace/Hooks/useSandbox.js";
 import { ScrollToTop } from "../Hooks/useScrollToTop.js";
 import { useDispatch } from "react-redux";
@@ -27,9 +28,13 @@ export default function DashboardLayout() {
 
   const handleSelectProject = async (projectId, projectTitle) => {
     try {
-      const sandboxRes = await startSandbox(projectId, projectTitle);
+      const proj = projects.find((p) => (p._id || p.id) === projectId);
+      const sandboxRes = await startSandbox(projectId, projectTitle, proj?.sandboxId);
       if (!sandboxRes.success) throw new Error(sandboxRes.error);
       const sandbox = sandboxRes.data;
+      if (proj && !proj.sandboxId && sandbox.sandboxId) {
+        projectService.updateProjectSandboxId(projectId, sandbox.sandboxId);
+      }
       navigate(`/workspace/${sandbox.sandboxId}`, {
         state: { projectId, projectTitle },
       });

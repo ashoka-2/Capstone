@@ -23,12 +23,12 @@ export function useSandbox() {
   } = useSelector((state) => state.sandbox);
 
   const startSandbox = useCallback(
-    async (projectId, projectTitle) => {
+    async (projectId, projectTitle, existingSandboxId = null) => {
       dispatch(setLoading(true));
       dispatch(setStartingProjectId(projectId));
       dispatch(setError(null));
       try {
-        const data = await sandboxService.startSandbox(projectId);
+        const data = await sandboxService.startSandbox(projectId, existingSandboxId);
         const host = window.location.hostname;
         const protocol = window.location.protocol;
         const isLocal = host.includes("localhost") || host === "127.0.0.1";

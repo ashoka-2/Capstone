@@ -19,35 +19,15 @@ export default function PreviewFrame({ previewUrl }) {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const iframeRef = useRef(null);
 
-  // Poll preview URL until container Vite server is live and responsive
-  const checkPreviewReady = useCallback(async (retryCount = 0) => {
-    if (!previewUrl) return;
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 3000);
-      
-      await fetch(previewUrl, {
-        method: "HEAD",
-        mode: "no-cors",
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
-      setIsReady(true);
-      setIsRefreshing(false);
-    } catch {
-      if (retryCount < 15) {
-        setTimeout(() => checkPreviewReady(retryCount + 1), 1500);
-      } else {
-        setIsReady(true);
-        setIsRefreshing(false);
-      }
-    }
-  }, [previewUrl]);
-
   useEffect(() => {
     setIsReady(false);
-    checkPreviewReady();
-  }, [checkPreviewReady, key]);
+    setIsRefreshing(false);
+    // Automatic timeout to clear overlay if iframe load takes a while
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [previewUrl, key]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -103,8 +83,7 @@ export default function PreviewFrame({ previewUrl }) {
           }}
         >
           <Lock
-            className="w-3 h-3 shrink-0"
-            style={{ color: "hsl(var(--success-foreground))" }}
+            className="w-3 h-3 shrink-0 text-emerald-400"
           />
           <span
             className="font-mono text-xs truncate select-all"
@@ -207,13 +186,13 @@ export default function PreviewFrame({ previewUrl }) {
                 className="text-xs font-semibold"
                 style={{ color: "hsl(var(--foreground))" }}
               >
-                Compiling container preview...
+                Launching sandbox container...
               </span>
               <span
                 className="text-[11px]"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
-                Hot-reloading React modules
+                Vite dev server starting up
               </span>
             </div>
             <Loader2
@@ -227,7 +206,10 @@ export default function PreviewFrame({ previewUrl }) {
           key={key}
           ref={iframeRef}
           src={previewUrl}
-          onLoad={() => setIsReady(true)}
+          onLoad={() => {
+            setIsReady(true);
+            setIsRefreshing(false);
+          }}
           className={`bg-white transition-all duration-300 ${getWidthStyle()}`}
           title="Sandbox Preview"
           sandbox="allow-forms allow-modals allow-popups allow-presentation allow-same-origin allow-scripts"

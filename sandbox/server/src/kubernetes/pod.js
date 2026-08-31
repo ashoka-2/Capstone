@@ -78,12 +78,36 @@ export async function createPod(sandboxId) {
     },
   };
 
-  const response = await k8sCoreV1Api.createNamespacedPod({
-    namespace:"default",
-    body:podManifest,
-    
-  });
-  return response;
+  try {
+    const response = await k8sCoreV1Api.createNamespacedPod({
+      namespace: "default",
+      body: podManifest,
+    });
+    return response;
+  } catch (err) {
+    if (
+      err.response?.statusCode === 409 ||
+      err.statusCode === 409 ||
+      err.message?.includes("AlreadyExists") ||
+      err.body?.reason === "AlreadyExists"
+    ) {
+      console.log(`Pod sandbox-pod-${sandboxId} already exists, reusing.`);
+      return { body: { metadata: { name: `sandbox-pod-${sandboxId}` } } };
+    }
+    throw err;
+  }
+}
+
+export async function getPod(sandboxId) {
+  try {
+    const res = await k8sCoreV1Api.readNamespacedPod({
+      name: `sandbox-pod-${sandboxId}`,
+      namespace: "default",
+    });
+    return res;
+  } catch (err) {
+    return null;
+  }
 }
 
 export async function deletePod(sandboxId) {
