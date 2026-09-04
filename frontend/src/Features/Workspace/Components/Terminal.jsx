@@ -129,24 +129,24 @@ export default function Terminal({ agentBase, height = 220, onResize }) {
   return (
     <div
       style={{ height: `${height}px` }}
-      className="w-full bg-[#06070c] border-t border-white/[0.08] flex flex-col shrink-0 select-none relative"
+      className="w-full bg-[#06070c] border-t border-subtle flex flex-col shrink-0 select-none relative"
     >
       {/* Terminal Control Bar */}
-      <div className="h-8 px-4 bg-[#090b12] border-b border-white/[0.05] flex items-center justify-between text-xs text-slate-400">
+      <div className="h-8 px-4 bg-aside border-b border-subtle flex items-center justify-between text-xs text-sub transition-colors duration-200">
         <div className="flex items-center gap-2.5">
-          <TermIcon className="w-3.5 h-3.5 text-purple-400" />
-          <span className="font-semibold text-slate-300 text-[11px]">Interactive PTY</span>
-          <div className="flex items-center gap-1.5 ml-2 bg-black/40 px-2 py-0.5 rounded-full border border-white/[0.05]">
+          <TermIcon className="w-3.5 h-3.5 text-[#ff7e40]" />
+          <span className="font-semibold text-main text-[11px]">Container PTY</span>
+          <div className="flex items-center gap-1.5 ml-2 bg-panel px-2 py-0.5 rounded-full border border-subtle">
             <Circle
               className={`w-1.5 h-1.5 fill-current ${
                 status === "connected"
-                  ? "text-emerald-400"
+                  ? "text-emerald-500 dark:text-emerald-400"
                   : status === "connecting"
-                  ? "text-amber-400 animate-pulse"
-                  : "text-red-400"
+                  ? "text-amber-500 animate-pulse"
+                  : "text-red-500"
               }`}
             />
-            <span className="text-[10px] font-mono capitalize">
+            <span className="text-[10px] font-mono capitalize text-sub">
               {status === "connecting" ? "Starting PTY..." : status}
             </span>
           </div>
@@ -156,7 +156,7 @@ export default function Terminal({ agentBase, height = 220, onResize }) {
           {status === "disconnected" && (
             <button
               onClick={handleReconnect}
-              className="p-1 hover:text-white transition-colors flex items-center gap-1 text-[11px]"
+              className="p-1 text-sub hover:text-main transition-colors flex items-center gap-1 text-[11px]"
               title="Reconnect Terminal"
             >
               <RefreshCw className="w-3 h-3" /> Reconnect
@@ -164,7 +164,7 @@ export default function Terminal({ agentBase, height = 220, onResize }) {
           )}
           <button
             onClick={handleClear}
-            className="p-1 hover:text-white transition-colors"
+            className="p-1 text-sub hover:text-main transition-colors"
             title="Clear Terminal"
           >
             <Trash2 className="w-3.5 h-3.5" />

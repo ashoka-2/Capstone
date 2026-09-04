@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSandbox } from "../Hooks/useSandbox.js";
@@ -27,10 +27,33 @@ export default function WorkspacePage() {
 
   const [activeTab, setActiveTab] = useState("preview");
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
-  const [terminalHeight, setTerminalHeight] = useState(220);
-  const isDragging = useRef(false);
+  const [isChatOpen, setIsChatOpen] = useState(true);
+
+  // Persistent panel dimensions from localStorage
+  const [chatWidth, setChatWidth] = useState(() => {
+    const saved = localStorage.getItem("lovable_chat_width");
+    return saved ? Math.max(260, Math.min(650, parseInt(saved, 10))) : 380;
+  });
+
+  const [explorerWidth, setExplorerWidth] = useState(() => {
+    const saved = localStorage.getItem("lovable_explorer_width");
+    return saved ? Math.max(160, Math.min(450, parseInt(saved, 10))) : 240;
+  });
+
+  const [terminalHeight, setTerminalHeight] = useState(() => {
+    const saved = localStorage.getItem("lovable_terminal_height");
+    return saved ? Math.max(100, Math.min(500, parseInt(saved, 10))) : 220;
+  });
+
+  // Dragging refs
+  const isDraggingChat = useRef(false);
+  const isDraggingExplorer = useRef(false);
+  const isDraggingTerminal = useRef(false);
+  const dragStartX = useRef(0);
+  const dragStartChatW = useRef(0);
+  const dragStartExpW = useRef(0);
   const dragStartY = useRef(0);
-  const dragStartH = useRef(0);
+  const dragStartTermH = useRef(0);
 
   useEffect(() => {
     if (!activeSandbox && id) {
@@ -53,26 +76,71 @@ export default function WorkspacePage() {
     }
   }, [activeSandbox, id, setSandbox]);
 
-  const handleMouseDown = (e) => {
-    isDragging.current = true;
-    dragStartY.current = e.clientY;
-    dragStartH.current = terminalHeight;
-    const handleMouseMove = (ev) => {
-      if (!isDragging.current) return;
-      setTerminalHeight(
-        Math.max(
-          100,
-          Math.min(450, dragStartH.current + (dragStartY.current - ev.clientY))
-        )
-      );
+  // Global mouse handlers for resizing
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (isDraggingChat.current) {
+        const delta = e.clientX - dragStartX.current;
+        const newW = Math.max(260, Math.min(650, dragStartChatW.current + delta));
+        setChatWidth(newW);
+        localStorage.setItem("lovable_chat_width", String(newW));
+      } else if (isDraggingExplorer.current) {
+        const delta = e.clientX - dragStartX.current;
+        const newW = Math.max(160, Math.min(450, dragStartExpW.current + delta));
+        setExplorerWidth(newW);
+        localStorage.setItem("lovable_explorer_width", String(newW));
+      } else if (isDraggingTerminal.current) {
+        const delta = dragStartY.current - e.clientY;
+        const newH = Math.max(100, Math.min(500, dragStartTermH.current + delta));
+        setTerminalHeight(newH);
+        localStorage.setItem("lovable_terminal_height", String(newH));
+      }
     };
+
     const handleMouseUp = () => {
-      isDragging.current = false;
+      isDraggingChat.current = false;
+      isDraggingExplorer.current = false;
+      isDraggingTerminal.current = false;
+      document.body.style.cursor = "default";
+      document.body.style.userSelect = "auto";
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
     };
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+  }, []);
+
+  // Chat resize start
+  const handleChatResizeStart = (e) => {
+    e.preventDefault();
+    isDraggingChat.current = true;
+    dragStartX.current = e.clientX;
+    dragStartChatW.current = chatWidth;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+
+  // Explorer resize start
+  const handleExplorerResizeStart = (e) => {
+    e.preventDefault();
+    isDraggingExplorer.current = true;
+    dragStartX.current = e.clientX;
+    dragStartExpW.current = explorerWidth;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  };
+
+  // Terminal resize start
+  const handleTerminalResizeStart = (e) => {
+    e.preventDefault();
+    isDraggingTerminal.current = true;
+    dragStartY.current = e.clientY;
+    dragStartTermH.current = terminalHeight;
+    document.body.style.cursor = "row-resize";
+    document.body.style.userSelect = "none";
   };
 
   const handleExit = () => {
@@ -82,29 +150,20 @@ export default function WorkspacePage() {
 
   if (!activeSandbox) {
     return (
-      <div
-        className="h-screen w-screen flex items-center justify-center gap-2.5 text-xs"
-        style={{
-          backgroundColor: "hsl(var(--background))",
-          color: "hsl(var(--muted-foreground))",
-        }}
-      >
-        <Loader2
-          className="w-5 h-5 animate-spin"
-          style={{ color: "hsl(var(--brand-tiger-primary))" }}
-        />
-        <span>Loading workspace...</span>
+      <div className="h-screen w-screen flex items-center justify-center gap-2.5 text-xs bg-canvas text-sub">
+        <Loader2 className="w-5 h-5 animate-spin text-[#ff7e40]" />
+        <span>Loading workspace container...</span>
       </div>
     );
   }
 
   return (
-    <div
-      className="flex flex-col h-screen w-screen overflow-hidden select-none"
-      style={{
-        backgroundColor: "hsl(var(--background))",
-        color: "hsl(var(--foreground))",
-      }}
+    <motion.div
+      initial={{ opacity: 0, scale: 0.99 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.99 }}
+      transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+      className="flex flex-col h-screen w-screen overflow-hidden select-none bg-canvas text-main transition-colors duration-200"
     >
       <WorkspaceHeader
         sandbox={activeSandbox}
@@ -113,15 +172,41 @@ export default function WorkspacePage() {
         onExitSandbox={handleExit}
         isTerminalOpen={isTerminalOpen}
         setIsTerminalOpen={setIsTerminalOpen}
+        isChatOpen={isChatOpen}
+        setIsChatOpen={setIsChatOpen}
       />
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left: AI Chat */}
-        <AiChat
-          projectId={activeSandbox.projectId}
-          initialPrompt={initialPrompt}
-          onFilesChanged={refreshFiles}
-        />
-        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Left: AI Chat with resize handle */}
+        <AnimatePresence initial={false}>
+          {isChatOpen && (
+            <motion.div
+              key="chat"
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: chatWidth, opacity: 1 }}
+              exit={{ width: 0, opacity: 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+              className="h-full flex overflow-hidden shrink-0 z-20"
+            >
+              <AiChat
+                projectId={activeSandbox.projectId}
+                initialPrompt={initialPrompt}
+                onFilesChanged={refreshFiles}
+                onToggleCollapse={() => setIsChatOpen(false)}
+                width={chatWidth}
+              />
+              {/* Horizontal resize handle between Chat and Main Area */}
+              <div
+                onMouseDown={handleChatResizeStart}
+                className="w-1 cursor-col-resize hover:bg-[#ff5a5f]/60 bg-aside border-r border-subtle transition-colors shrink-0 z-20"
+                title="Drag to resize AI Assistant panel"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Right Main Area: Preview or Code + Terminal */}
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-canvas">
           <div className="flex-1 flex overflow-hidden relative">
             <AnimatePresence mode="wait">
               {activeTab === "preview" ? (
@@ -130,6 +215,7 @@ export default function WorkspacePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
+                  transition={{ duration: 0.18 }}
                   className="w-full h-full"
                 >
                   <PreviewFrame previewUrl={activeSandbox.previewUrl} />
@@ -140,6 +226,7 @@ export default function WorkspacePage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
+                  transition={{ duration: 0.18 }}
                   className="flex-1 flex w-full h-full overflow-hidden"
                 >
                   <FileExplorer
@@ -148,7 +235,16 @@ export default function WorkspacePage() {
                     onSelectFile={selectFile}
                     refreshKey={fileRefreshKey}
                     onFilesChanged={refreshFiles}
+                    width={explorerWidth}
                   />
+
+                  {/* Horizontal resize handle between FileExplorer and FileViewer */}
+                  <div
+                    onMouseDown={handleExplorerResizeStart}
+                    className="w-1 cursor-col-resize hover:bg-[#ff5a5f]/60 bg-aside border-r border-subtle transition-colors shrink-0 z-10"
+                    title="Drag to resize Explorer panel"
+                  />
+
                   <FileViewer
                     agentBase={activeSandbox.agentBase}
                     activeFile={activeFile}
@@ -158,12 +254,14 @@ export default function WorkspacePage() {
               )}
             </AnimatePresence>
           </div>
+
+          {/* Terminal Panel with vertical resize handle */}
           {isTerminalOpen && (
             <div className="flex flex-col shrink-0">
               <div
-                onMouseDown={handleMouseDown}
-                className="h-1 cursor-row-resize transition-colors"
-                style={{ backgroundColor: "hsl(var(--border) / 0.3)" }}
+                onMouseDown={handleTerminalResizeStart}
+                className="h-1 cursor-row-resize bg-aside border-t border-subtle hover:bg-[#ff5a5f]/60 transition-colors"
+                title="Drag to resize Terminal panel"
               />
               <Terminal
                 agentBase={activeSandbox.agentBase}
@@ -174,6 +272,6 @@ export default function WorkspacePage() {
           )}
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

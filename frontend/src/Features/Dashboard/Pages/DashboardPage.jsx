@@ -11,17 +11,19 @@ import {
   GitBranch,
   Palette,
   Database,
-  ArrowUpRight,
-  ChevronDown,
   Trash2,
   Sparkles,
+  Terminal,
+  Cpu,
+  Zap,
+  Layers,
 } from "lucide-react";
 import { useProjects } from "../Hooks/useProjects.js";
 import { projectService } from "../Services/project.api.js";
 import { useSandbox } from "../../Workspace/Hooks/useSandbox.js";
 import { SkeletonProjectList } from "../../../Components/SkeletonLoader.jsx";
+import AnimatedText from "../../../Components/AnimatedText.jsx";
 import { addToast } from "../../../utils/toast.slice.js";
-import heartGlowImg from "../../../assets/lovable-heart-glow.png";
 
 export default function DashboardPage({ userName = "Ashok" }) {
   const navigate = useNavigate();
@@ -139,223 +141,130 @@ export default function DashboardPage({ userName = "Ashok" }) {
   };
 
   return (
-    <div
-      className="flex-1 h-screen overflow-y-auto flex flex-col items-center select-none relative"
-      style={{ backgroundColor: "hsl(var(--background))" }}
-    >
-      {/* ── Lovable Layered Blur Heart Glow Background ── */}
-      <div className="absolute top-0 left-0 right-0 h-[620px] overflow-hidden pointer-events-none flex items-center justify-center">
-        {/* Layer 1: Ambient wide radial halo */}
-        <div
-          className="absolute -top-32 w-[900px] h-[700px] rounded-full opacity-60 dark:opacity-40 blur-[140px] pointer-events-none"
-          style={{
-            background:
-              "radial-gradient(ellipse at center, rgba(28, 105, 228, 0.78) 0%, rgba(252, 64, 158, 0.6) 40%, rgba(249, 22, 86, 0.52) 70%, transparent 100%)",
-          }}
-        />
-
-        {/* Layer 2: Concentric Glowing Blur Heart Asset */}
-        <div className="relative top-90 w-[700px] h-[550px] flex items-center justify-center">
-          <img
-            src={heartGlowImg}
-            alt="Lovable Glow"
-            className="w-auto h-auto object-contain mix-blend-screen dark:opacity-90 opacity-75 filter blur-[2px] transform scale-510"
-          />
-        </div>
-
-        {/* Layer 3: Smooth bottom gradient mask into background */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background:
-              "linear-gradient(to bottom, transparent 0%, transparent 60%, hsl(var(--background)) 100%)",
-          }}
-        />
+    <div className="flex-1 h-screen overflow-y-auto flex flex-col items-center select-none relative bg-canvas text-main transition-colors duration-200">
+      {/* ── Ambient Sunset Coral & Warm Orange Radial Glow ── */}
+      <div className="absolute top-0 left-0 right-0 h-[480px] overflow-hidden pointer-events-none flex items-center justify-center">
+        <div className="absolute -top-24 w-[750px] h-[420px] rounded-full bg-[radial-gradient(ellipse_at_center,rgba(255,90,95,0.15)_0%,rgba(255,126,64,0.08)_50%,transparent_80%)] blur-[110px]" />
       </div>
 
       {/* ── Main Content Container ── */}
-      <div className="w-full max-w-5xl px-6 py-10 flex flex-col items-center relative z-10">
-        {/* Connect all your tools badge */}
+      <div className="w-full max-w-5xl px-4 sm:px-6 py-8 sm:py-12 flex flex-col items-center relative z-10">
+        {/* Connectors badge */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => navigate("/connectors")}
-          className="inline-flex items-center gap-3 px-3.5 py-1.5 rounded-full border cursor-pointer group mb-8 backdrop-blur-md transition-all shadow-lg shadow-black/20"
-          style={{
-            backgroundColor: "hsl(var(--card) / 0.7)",
-            borderColor: "hsl(var(--border) / 0.7)",
-          }}
+          className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border border-subtle bg-panel/80 cursor-pointer group mb-6 backdrop-blur-md transition-all hover:border-[#ff5a5f]/40 shadow-sm dark:shadow-lg"
         >
-          <div className="flex items-center -space-x-1.5">
-            <div
-              className="w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
-              style={{
-                backgroundColor: "hsl(var(--brand-ocean-primary) / 0.2)",
-                border: "1px solid hsl(var(--brand-ocean-primary) / 0.4)",
-              }}
-            >
-              <GitBranch
-                className="w-3 h-3"
-                style={{ color: "hsl(var(--brand-ocean-primary))" }}
-              />
+          <div className="flex items-center -space-x-1">
+            <div className="w-5 h-5 rounded-full bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-[#ff5a5f]">
+              <GitBranch className="w-3 h-3" />
             </div>
-            <div
-              className="w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
-              style={{
-                backgroundColor: "hsl(var(--brand-twilight-primary) / 0.2)",
-                border: "1px solid hsl(var(--brand-twilight-primary) / 0.4)",
-              }}
-            >
-              <Palette
-                className="w-3 h-3"
-                style={{ color: "hsl(var(--brand-twilight-primary))" }}
-              />
+            <div className="w-5 h-5 rounded-full bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-[#ff7e40]">
+              <Database className="w-3 h-3" />
             </div>
-            <div
-              className="w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
-              style={{
-                backgroundColor: "hsl(var(--success) / 0.3)",
-                border: "1px solid hsl(var(--success-foreground) / 0.4)",
-              }}
-            >
-              <Database
-                className="w-3 h-3"
-                style={{ color: "hsl(var(--success-foreground))" }}
-              />
+            <div className="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+              <Sparkles className="w-3 h-3" />
             </div>
           </div>
-          <span
-            className="text-xs font-medium"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-          >
-            Connect all your tools
+          <span className="text-xs font-medium text-sub group-hover:text-main transition-colors">
+            Connect developer tools & MCP
           </span>
-          <ArrowRight
-            className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-          />
+          <ArrowRight className="w-3.5 h-3.5 text-sub group-hover:translate-x-0.5 group-hover:text-[#ff7e40] transition-all" />
         </motion.div>
 
-        {/* Hero Heading */}
-        <motion.h1
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-8 text-center drop-shadow-lg"
-          style={{ color: "hsl(var(--foreground))" }}
-        >
-          Got an idea, {userName}?
-        </motion.h1>
+        {/* Hero Heading with Word Stagger */}
+        <div className="mb-8 text-center">
+          <AnimatedText
+            text={`What would you like to build, ${userName}?`}
+            className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-main justify-center"
+          />
+          <p className="text-sub text-sm mt-2.5 font-normal">
+            Kubernetes-powered AI workspaces with live previews and full terminal access
+          </p>
+        </div>
 
-        {/* Floating Prompt Input Box */}
+        {/* Sunset Studio Prompt Input Box */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="w-full max-w-2xl mb-12 sm:mb-14"
+          className="w-full max-w-2xl mb-10 sm:mb-12"
         >
           <form
             onSubmit={(e) => {
               e.preventDefault();
               handleCreateAndLaunch();
             }}
-            className="relative flex flex-col p-3 rounded-2xl border shadow-2xl backdrop-blur-xl transition-all duration-300 group focus-within:ring-2 focus-within:ring-orange-500/30"
-            style={{
-              backgroundColor: "hsl(var(--card) / 0.85)",
-              borderColor: "hsl(var(--border) / 0.8)",
-            }}
+            className="relative flex flex-col p-3 rounded-2xl border border-subtle bg-panel shadow-xl backdrop-blur-xl transition-all duration-200 focus-within:border-[#ff5a5f]/50 focus-within:ring-2 focus-within:ring-[#ff5a5f]/20"
           >
             <textarea
               rows={2}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Ask Lovable to create an app, dashboard, game..."
-              className="w-full bg-transparent px-3 py-2 text-sm placeholder-[hsl(var(--muted-foreground)/0.5)] focus:outline-none resize-none font-sans leading-relaxed"
-              style={{ color: "hsl(var(--foreground))" }}
+              placeholder="Ask Lovable to create a modern web app, dashboard, tool..."
+              className="w-full bg-transparent px-3 py-2 text-sm text-main placeholder:text-sub focus:outline-none resize-none font-sans leading-relaxed"
             />
-            <div
-              className="flex items-center justify-between pt-2"
-              style={{ borderTop: "1px solid hsl(var(--border) / 0.5)" }}
-            >
-              <button
-                type="button"
-                className="p-2 rounded-xl transition-colors hover:opacity-80"
-                style={{ color: "hsl(var(--muted-foreground))" }}
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between pt-2 border-t border-subtle">
+              <div className="flex items-center gap-1 text-sub">
                 <button
                   type="button"
-                  className="p-2 rounded-xl transition-colors hover:opacity-80"
-                  style={{ color: "hsl(var(--muted-foreground))" }}
+                  className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 hover:text-main transition-colors"
+                  title="Add files"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  className="p-1.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/10 hover:text-main transition-colors"
+                  title="Voice input"
                 >
                   <Mic className="w-4 h-4" />
                 </button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={submitting || !prompt.trim()}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-xs shadow-lg disabled:opacity-40 transition-all"
-                  style={{
-                    backgroundColor: "hsl(var(--primary))",
-                    color: "hsl(var(--primary-foreground))",
-                  }}
-                >
-                  {submitting ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <span>Build</span>
-                  )}
-                  <ChevronDown className="w-3 h-3" />
-                </motion.button>
               </div>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="submit"
+                disabled={submitting || !prompt.trim()}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl font-semibold text-xs bg-gradient-to-r from-[#ff5a5f] to-[#ff7e40] hover:opacity-90 text-white shadow-lg shadow-[#ff5a5f]/20 disabled:opacity-40 transition-all"
+              >
+                {submitting ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <>
+                    <span>Build App</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </>
+                )}
+              </motion.button>
             </div>
           </form>
         </motion.div>
 
-        {/* Projects Section Card Container */}
-        <div
-          className="w-full flex flex-col p-4 sm:p-6 rounded-3xl border shadow-2xl backdrop-blur-xl"
-          style={{
-            backgroundColor: "hsl(var(--card) / 0.8)",
-            borderColor: "hsl(var(--border) / 0.6)",
-          }}
-        >
+        {/* Projects Section */}
+        <div className="w-full flex flex-col p-4 sm:p-6 rounded-2xl border border-subtle bg-panel shadow-lg backdrop-blur-xl">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <div
-              className="flex items-center gap-0.5 p-1 rounded-xl border flex-wrap"
-              style={{
-                backgroundColor: "hsl(var(--muted) / 0.5)",
-                borderColor: "hsl(var(--border) / 0.5)",
-              }}
-            >
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-aside border border-subtle">
               {[
-                { id: "my-projects", label: "My projects" },
-                { id: "recently-viewed", label: "Recently viewed" },
+                { id: "my-projects", label: "All Projects" },
+                { id: "recently-viewed", label: "Active Sandboxes" },
               ].map(({ id, label }) => (
                 <button
                   key={id}
                   onClick={() => setActiveTab(id)}
-                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                  style={{
-                    backgroundColor:
-                      activeTab === id ? "hsl(var(--card))" : "transparent",
-                    color:
-                      activeTab === id
-                        ? "hsl(var(--foreground))"
-                        : "hsl(var(--muted-foreground))",
-                  }}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    activeTab === id
+                      ? "bg-panel text-main shadow-sm border border-subtle"
+                      : "text-sub hover:text-main"
+                  }`}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <span
-              className="text-xs font-medium"
-              style={{ color: "hsl(var(--muted-foreground))" }}
-            >
+            <span className="text-xs font-mono text-sub">
               {filteredProjects.length} {filteredProjects.length === 1 ? "project" : "projects"}
             </span>
           </div>
@@ -364,29 +273,17 @@ export default function DashboardPage({ userName = "Ashok" }) {
           {projectsLoading ? (
             <SkeletonProjectList count={6} />
           ) : filteredProjects.length === 0 ? (
-            <div
-              className="py-16 text-center text-xs flex flex-col items-center justify-center gap-2"
-              style={{ color: "hsl(var(--muted-foreground))" }}
-            >
-              <div
-                className="w-10 h-10 rounded-2xl flex items-center justify-center mb-1"
-                style={{
-                  backgroundColor: "hsl(var(--muted) / 0.4)",
-                  border: "1px solid hsl(var(--border) / 0.5)",
-                }}
-              >
-                <Code2
-                  className="w-5 h-5"
-                  style={{ color: "hsl(var(--muted-foreground))" }}
-                />
+            <div className="py-16 text-center text-xs flex flex-col items-center justify-center gap-3 text-sub">
+              <div className="w-12 h-12 rounded-2xl bg-aside border border-subtle flex items-center justify-center text-sub">
+                <Code2 className="w-6 h-6 text-[#ff7e40]" />
               </div>
-              <span className="font-medium">No projects created yet.</span>
-              <span className="text-[11px] opacity-75">
-                Type an idea above and click "Build" to launch your first workspace!
+              <span className="font-semibold text-main text-sm">No workspaces created yet</span>
+              <span className="text-xs text-sub max-w-sm">
+                Enter what you want to build in the box above and click "Build App" to provision a live container pod.
               </span>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filteredProjects.map((p) => {
                 const pId = p._id || p.id;
                 const pTitle = p.title || p.name || "Untitled Project";
@@ -394,98 +291,63 @@ export default function DashboardPage({ userName = "Ashok" }) {
                 return (
                   <motion.div
                     key={pId}
-                    whileHover={{ y: -4 }}
+                    whileHover={{ y: -3 }}
                     onClick={() => handleOpenExisting(pId, pTitle)}
-                    className="flex flex-col rounded-2xl border overflow-hidden cursor-pointer transition-all duration-300 group shadow-lg hover:shadow-xl relative"
-                    style={{
-                      backgroundColor: "hsl(var(--card))",
-                      borderColor: "hsl(var(--border) / 0.6)",
-                    }}
+                    className="group flex flex-col rounded-xl border border-subtle bg-panel overflow-hidden cursor-pointer transition-all duration-200 hover:border-[#ff5a5f]/40 shadow-sm hover:shadow-xl relative glow-card"
                   >
-                    {/* Top Canvas Preview Thumbnail */}
-                    <div
-                      className="h-40 w-full relative p-4 flex flex-col justify-between"
-                      style={{
-                        background:
-                          "linear-gradient(135deg, hsl(var(--brand-tiger-primary) / 0.12), hsl(var(--card)), hsl(var(--brand-twilight-primary) / 0.12))",
-                        borderBottom: "1px solid hsl(var(--border) / 0.3)",
-                      }}
-                    >
+                    {/* Top Terminal / Visual Mock Header */}
+                    <div className="h-32 w-full relative p-3 flex flex-col justify-between bg-gradient-to-br from-black/[0.03] to-black/[0.08] dark:from-[#16171d] dark:to-[#121316] border-b border-subtle">
                       <div className="flex items-center justify-between w-full">
-                        <span
-                          className="px-2 py-0.5 rounded-full text-[10px] font-semibold shadow-sm"
-                          style={{
-                            backgroundColor: "hsl(var(--success) / 0.3)",
-                            color: "hsl(var(--success-foreground))",
-                            border:
-                              "1px solid hsl(var(--success-foreground) / 0.3)",
-                          }}
-                        >
-                          Published
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-red-500/80" />
+                          <span className="w-2 h-2 rounded-full bg-yellow-500/80" />
+                          <span className="w-2 h-2 rounded-full bg-green-500/80" />
+                        </div>
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#ff5a5f]/15 text-[#ff7e40] border border-[#ff5a5f]/30">
+                          {p.sandboxId ? "Pod Active" : "Ready"}
                         </span>
-                        {/* Delete project button */}
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-aside border border-subtle flex items-center justify-center text-main">
+                            <Terminal className="w-3.5 h-3.5" />
+                          </div>
+                          <span className="text-[11px] font-mono text-sub truncate max-w-[120px]">
+                            {p.sandboxId ? `pod-${p.sandboxId.slice(0, 6)}` : "standalone"}
+                          </span>
+                        </div>
+
                         <button
-                          onClick={(e) =>
-                            handleDeleteProject(e, pId, pTitle)
-                          }
-                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-black/40 hover:bg-red-500/20 hover:text-red-400 text-neutral-400 transition-all"
-                          title="Delete Project & Pod"
+                          onClick={(e) => handleDeleteProject(e, pId, pTitle)}
+                          className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg bg-aside hover:bg-red-500/20 hover:text-red-500 text-sub transition-all"
+                          title="Delete Project & Terminate Pod"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
-
-                      <div
-                        className="w-8 h-8 rounded-xl flex items-center justify-center shadow-sm"
-                        style={{
-                          backgroundColor: "hsl(var(--muted) / 0.5)",
-                          border: "1px solid hsl(var(--border))",
-                        }}
-                      >
-                        <Code2
-                          className="w-4 h-4"
-                          style={{ color: "hsl(var(--muted-foreground))" }}
-                        />
-                      </div>
                     </div>
 
                     {/* Bottom Metadata */}
-                    <div className="p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0 pr-2">
-                        <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white shrink-0 shadow-sm"
-                          style={{
-                            backgroundColor:
-                              "hsl(var(--brand-tiger-primary))",
-                          }}
-                        >
+                    <div className="p-3.5 flex items-center justify-between bg-panel">
+                      <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                        <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-[#ff5a5f] to-[#ff7e40] flex items-center justify-center text-white text-[10px] font-bold shrink-0 shadow-sm shadow-[#ff5a5f]/20">
                           {userName.charAt(0)}
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span
-                            className="text-xs font-semibold truncate"
-                            style={{ color: "hsl(var(--foreground))" }}
-                          >
+                          <span className="text-xs font-semibold text-main truncate group-hover:text-[#ff7e40] transition-colors">
                             {pTitle}
                           </span>
-                          <span
-                            className="text-[10px] truncate"
-                            style={{ color: "hsl(var(--muted-foreground))" }}
-                          >
-                            Edited recently
+                          <span className="text-[10px] text-sub truncate">
+                            {p.updatedAt ? new Date(p.updatedAt).toLocaleDateString() : "Active container"}
                           </span>
                         </div>
                       </div>
+
                       {isOpening ? (
-                        <Loader2
-                          className="w-4 h-4 animate-spin shrink-0"
-                          style={{ color: "hsl(var(--brand-tiger-primary))" }}
-                        />
+                        <Loader2 className="w-4 h-4 animate-spin text-[#ff7e40] shrink-0" />
                       ) : (
-                        <ArrowRight
-                          className="w-4 h-4 group-hover:translate-x-0.5 transition-all shrink-0"
-                          style={{ color: "hsl(var(--muted-foreground))" }}
-                        />
+                        <ArrowRight className="w-4 h-4 text-sub group-hover:translate-x-1 group-hover:text-[#ff7e40] transition-all shrink-0" />
                       )}
                     </div>
                   </motion.div>

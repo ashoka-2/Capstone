@@ -172,33 +172,18 @@ export default function PreviewFrame({ previewUrl }) {
             className="absolute inset-0 flex flex-col items-center justify-center gap-3 z-10 backdrop-blur-sm"
             style={{ backgroundColor: "hsl(var(--background) / 0.85)" }}
           >
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
-              style={{
-                background:
-                  "linear-gradient(135deg, hsl(var(--brand-tiger-primary)), hsl(var(--brand-flamingo-primary)))",
-              }}
-            >
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-tr from-[#10a37f] to-[#19c37d] shadow-[#10a37f]/20">
               <Sparkles className="w-6 h-6 text-white animate-pulse" />
             </div>
             <div className="flex flex-col items-center gap-1">
-              <span
-                className="text-xs font-semibold"
-                style={{ color: "hsl(var(--foreground))" }}
-              >
+              <span className="text-xs font-semibold text-neutral-100">
                 Launching sandbox container...
               </span>
-              <span
-                className="text-[11px]"
-                style={{ color: "hsl(var(--muted-foreground))" }}
-              >
+              <span className="text-[11px] text-neutral-400">
                 Vite dev server starting up
               </span>
             </div>
-            <Loader2
-              className="w-4 h-4 animate-spin mt-1"
-              style={{ color: "hsl(var(--brand-tiger-primary))" }}
-            />
+            <Loader2 className="w-4 h-4 animate-spin mt-1 text-[#19c37d]" />
           </div>
         )}
 

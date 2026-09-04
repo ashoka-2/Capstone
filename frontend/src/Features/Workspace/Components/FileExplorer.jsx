@@ -13,6 +13,7 @@ import {
   FileCode2,
 } from "lucide-react";
 import { getFileIcon } from "../../../utils/fileIcons.jsx";
+import { useSelector } from "react-redux";
 
 export default function FileExplorer({
   agentBase,
@@ -20,7 +21,9 @@ export default function FileExplorer({
   onSelectFile,
   refreshKey,
   onFilesChanged,
+  width = 240,
 }) {
+  const pendingChanges = useSelector((state) => state.sandbox.pendingChanges);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -219,6 +222,12 @@ export default function FileExplorer({
           );
         }
 
+        const isModified = Boolean(
+          pendingChanges[itemPath] ||
+          pendingChanges[`/${itemPath}`] ||
+          pendingChanges[`/app/${itemPath}`]
+        );
+
         return (
           <div
             key={itemPath}
@@ -245,6 +254,9 @@ export default function FileExplorer({
               >
                 {key}
               </span>
+              {isModified && (
+                <span className="w-1.5 h-1.5 rounded-full bg-[#19c37d] animate-pulse shrink-0" title="Modified by AI" />
+              )}
             </div>
             <button
               onClick={(e) => handleDelete(e, itemPath)}
@@ -261,11 +273,12 @@ export default function FileExplorer({
 
   return (
     <div
-      className="w-64 border-r flex flex-col h-full shrink-0 select-none overflow-hidden"
       style={{
+        width: `${width}px`,
         backgroundColor: "hsl(var(--card))",
         borderColor: "hsl(var(--border) / 0.6)",
       }}
+      className="border-r flex flex-col h-full shrink-0 select-none overflow-hidden"
     >
       {/* Explorer Header */}
       <div
@@ -463,11 +476,7 @@ export default function FileExplorer({
                   <button
                     type="submit"
                     disabled={creating || !newPath.trim()}
-                    className="px-4 py-2 rounded-xl text-white font-semibold text-xs shadow-md transition-all disabled:opacity-40"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, hsl(var(--brand-tiger-primary)), hsl(var(--brand-flamingo-primary)))",
-                    }}
+                    className="px-4 py-2 rounded-xl text-white font-semibold text-xs shadow-md shadow-[#ff5a5f]/20 transition-all disabled:opacity-40 bg-gradient-to-r from-[#ff5a5f] to-[#ff7e40] hover:opacity-90"
                   >
                     {creating ? "Creating..." : "Create"}
                   </button>
