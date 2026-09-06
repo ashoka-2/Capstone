@@ -31,17 +31,17 @@ export default function WorkspacePage() {
 
   // Persistent panel dimensions from localStorage
   const [chatWidth, setChatWidth] = useState(() => {
-    const saved = localStorage.getItem("lovable_chat_width");
+    const saved = localStorage.getItem("codeable_chat_width") || localStorage.getItem("lovable_chat_width");
     return saved ? Math.max(260, Math.min(650, parseInt(saved, 10))) : 380;
   });
 
   const [explorerWidth, setExplorerWidth] = useState(() => {
-    const saved = localStorage.getItem("lovable_explorer_width");
+    const saved = localStorage.getItem("codeable_explorer_width") || localStorage.getItem("lovable_explorer_width");
     return saved ? Math.max(160, Math.min(450, parseInt(saved, 10))) : 240;
   });
 
   const [terminalHeight, setTerminalHeight] = useState(() => {
-    const saved = localStorage.getItem("lovable_terminal_height");
+    const saved = localStorage.getItem("codeable_terminal_height") || localStorage.getItem("lovable_terminal_height");
     return saved ? Math.max(100, Math.min(500, parseInt(saved, 10))) : 220;
   });
 
@@ -83,17 +83,17 @@ export default function WorkspacePage() {
         const delta = e.clientX - dragStartX.current;
         const newW = Math.max(260, Math.min(650, dragStartChatW.current + delta));
         setChatWidth(newW);
-        localStorage.setItem("lovable_chat_width", String(newW));
+        localStorage.setItem("codeable_chat_width", String(newW));
       } else if (isDraggingExplorer.current) {
         const delta = e.clientX - dragStartX.current;
         const newW = Math.max(160, Math.min(450, dragStartExpW.current + delta));
         setExplorerWidth(newW);
-        localStorage.setItem("lovable_explorer_width", String(newW));
+        localStorage.setItem("codeable_explorer_width", String(newW));
       } else if (isDraggingTerminal.current) {
         const delta = dragStartY.current - e.clientY;
         const newH = Math.max(100, Math.min(500, dragStartTermH.current + delta));
         setTerminalHeight(newH);
-        localStorage.setItem("lovable_terminal_height", String(newH));
+        localStorage.setItem("codeable_terminal_height", String(newH));
       }
     };
 

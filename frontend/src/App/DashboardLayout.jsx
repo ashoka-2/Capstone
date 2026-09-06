@@ -92,7 +92,7 @@ export default function DashboardLayout() {
           <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-[#ff5a5f] to-[#ff7e40] flex items-center justify-center text-white shadow-sm shadow-[#ff5a5f]/20">
             <Sparkles className="w-3.5 h-3.5" />
           </div>
-          <span className="text-sm font-semibold text-main">Lovable</span>
+          <span className="text-sm font-semibold text-main">Codeable</span>
         </div>
         <div className="w-8" />
       </div>

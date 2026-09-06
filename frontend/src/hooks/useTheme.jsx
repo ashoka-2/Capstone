@@ -13,7 +13,7 @@ const ThemeContext = createContext({
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("lovable-theme");
+      const saved = localStorage.getItem("codeable-theme") || localStorage.getItem("lovable-theme");
       if (saved === "light" || saved === "dark") return saved;
       return window.matchMedia("(prefers-color-scheme: dark)").matches
         ? "dark"
@@ -31,7 +31,7 @@ export function ThemeProvider({ children }) {
     } else {
       root.classList.remove("dark");
     }
-    localStorage.setItem("lovable-theme", theme);
+    localStorage.setItem("codeable-theme", theme);
   }, [theme]);
 
   const applyTransitionStyles = useCallback((css) => {
@@ -86,7 +86,7 @@ export function ThemeProvider({ children }) {
             } else {
               root.classList.remove("dark");
             }
-            localStorage.setItem("lovable-theme", next);
+            localStorage.setItem("codeable-theme", next);
             return next;
           });
         });

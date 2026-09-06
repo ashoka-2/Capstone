@@ -202,7 +202,7 @@ export default function DashboardPage({ userName = "Ashok" }) {
               rows={2}
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Ask Lovable to create a modern web app, dashboard, tool..."
+              placeholder="Ask Codeable to create a modern web app, dashboard, tool..."
               className="w-full bg-transparent px-3 py-2 text-sm text-main placeholder:text-sub focus:outline-none resize-none font-sans leading-relaxed"
             />
             <div className="flex items-center justify-between pt-2 border-t border-subtle">

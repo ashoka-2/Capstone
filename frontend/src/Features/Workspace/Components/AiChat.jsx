@@ -131,7 +131,7 @@ export default function AiChat({
       id: "welcome",
       role: "assistant",
       content:
-        "Hello Ashok! I am **Lovable AI**. I can read your code files, create components, refactor pages, and build fullstack features. What would you like to build?",
+        "Hello Ashok! I am **Codeable AI**. I can read your code files, create components, refactor pages, and build fullstack features. What would you like to build?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -463,7 +463,7 @@ export default function AiChat({
             <Sparkles className="w-3.5 h-3.5" />
           </div>
           <div className="flex flex-col">
-            <span className="text-xs font-semibold text-main">Lovable AI</span>
+            <span className="text-xs font-semibold text-main">Codeable AI</span>
             <span className="text-[10px] text-sub font-mono">Sunset Studio Agent</span>
           </div>
         </div>
@@ -500,7 +500,7 @@ export default function AiChat({
                 {!isUser && (
                   <div className="flex items-center gap-1.5 mb-2 text-[11px] font-semibold text-[#ff7e40]">
                     <Bot className="w-3.5 h-3.5" />
-                    <span>Lovable Agent</span>
+                    <span>Codeable Agent</span>
                   </div>
                 )}
 

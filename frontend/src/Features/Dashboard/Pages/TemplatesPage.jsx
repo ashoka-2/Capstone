@@ -156,7 +156,7 @@ export default function TemplatesPage() {
       {/* Main Title */}
       <div className="w-full max-w-6xl text-left mb-6">
         <h1 className="text-3xl font-extrabold text-main tracking-tight mb-2">
-          Lovable{" "}
+          Codeable{" "}
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff5a5f] to-[#ff7e40]">
             Templates
           </span>

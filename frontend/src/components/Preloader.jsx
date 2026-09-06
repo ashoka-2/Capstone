@@ -99,7 +99,7 @@ export default function Preloader({ onComplete }) {
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-xl tracking-tight text-neutral-100">Lovable</span>
+              <span className="font-semibold text-xl tracking-tight text-neutral-100">Codeable</span>
               <span className="text-xs px-1.5 py-0.5 rounded-full bg-[#ff5a5f]/20 text-[#ff7e40] font-mono border border-[#ff5a5f]/30">AI</span>
             </div>
             <span className="text-[11px] text-neutral-400 font-mono tracking-wider uppercase">Cloud Studio</span>

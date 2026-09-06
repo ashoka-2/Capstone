@@ -2,7 +2,8 @@
 // Provides rigorous validation and live connector context injection for the AI agent
 
 const CURRENT_USER_ID = "user_me";
-const STORAGE_KEY = `lovable_connectors_${CURRENT_USER_ID}`;
+const STORAGE_KEY = `codeable_connectors_${CURRENT_USER_ID}`;
+const LEGACY_STORAGE_KEY = `lovable_connectors_${CURRENT_USER_ID}`;
 
 export const DEFAULT_CONNECTORS = [
   {
@@ -238,7 +239,7 @@ export const connectorService = {
 
   getConnectors() {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
       if (stored) {
         const savedMap = JSON.parse(stored);
         return DEFAULT_CONNECTORS.map((def) => {

@@ -1,13 +1,14 @@
 // Real Project Management Service with Local Persistence + Kubernetes Pod Orchestration
 import { request } from "../../../utils/api.js";
 
-const STORAGE_KEY = "lovable_projects_v2";
+const STORAGE_KEY = "codeable_projects_v2";
+const LEGACY_STORAGE_KEY = "lovable_projects_v2";
 const DEFAULT_PROJECTS = [];
 
 export const projectService = {
   async getProjects() {
     try {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
       if (stored) {
         return JSON.parse(stored);
       }

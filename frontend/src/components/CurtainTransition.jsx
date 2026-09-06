@@ -146,7 +146,7 @@ export default function CurtainTransition() {
                 isDark ? "text-[#ff7e40]" : "text-[#ff5a5f]"
               }`}
             >
-              Lovable Studio
+              Codeable Studio
             </span>
             <span
               className={`text-sm font-semibold tracking-tight ${
