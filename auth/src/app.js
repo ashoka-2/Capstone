@@ -28,16 +28,6 @@ passport.use(new GoogleStrategy({
 }));
 
 
-app.get("/api/auth/google", passport.authenticate("google", {
-    scope: ["profile", "email"],
-}));
-app.get("/api/auth/google/callback", passport.authenticate("google", {
-    failureRedirect: "/login",
-    successRedirect: "/dashboard",
-}));
-
-
-
 app.get("/_status/healthz",(req,res)=>{
     res.status(200).json({
         status:"ok"
