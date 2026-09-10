@@ -21,22 +21,34 @@ router.get(
   async (req, res) => {
     try {
       const { id, displayName, emails, photos } = req.user;
-      let user = await UserModel.findOne({ googleId: id });
+      const email = emails?.[0]?.value;
+      const avatar = photos?.[0]?.value;
+
+      let user = await UserModel.findOne({
+        $or: [{ googleId: id }, ...(email ? [{ email }] : [])],
+      });
+
       if (!user) {
         user = new UserModel({
           name: displayName,
-          email: emails[0].value,
+          email,
           googleId: id,
-          avatar: photos[0].value,
+          ...(avatar ? { avatar } : {}),
         });
+        await user.save();
+      } else if (!user.googleId) {
+        user.googleId = id;
+        if (avatar && !user.avatar) {
+          user.avatar = avatar;
+        }
         await user.save();
       }
 
       const token = user.generateAuthToken();
       res.cookie("jwt", token, {
         httpOnly: true,
-        secure: true,
-        sameSite: "strict",
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000,
       });
 
