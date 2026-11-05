@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get("/api/sandbox/health", (req, res) => {
     res.status(200).json({
-        message: "Sanbox API is healthy",
+        message: "Sandbox API is healthy",
         status: "Ok"
     });
 });
