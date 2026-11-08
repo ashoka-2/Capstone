@@ -6,8 +6,7 @@ import { createProxyMiddleware } from "http-proxy-middleware";
 const app = express();
 
 app.use(morgan("combined"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
 
 
 
@@ -70,12 +69,15 @@ app.use((req,res,next)=>{
     else if(host.split('.')[1] === "preview"){
         return getProxy(sandboxId)(req,res,next);
     }
+    else {
+        return res.status(404).json({
+            message: "Unknown host pattern",
+            status: "error"
+        });
+    }
 
 });
 
 
 
 export default app;
-
-
-
