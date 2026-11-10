@@ -5,17 +5,17 @@ import * as z from "zod";
 
 
 export const listFiles = tool(
-    async ({},config) => {
+    async ({}, config) => {
         try {
-            
-            
+            const writer = config?.writer;
+            writer?.("Listing files in the project directory ...\n");
 
-            const response = await axios.get(`http://sandbox-service-${config.context.projectId}:3000/list-files`);
+            const response = await axios.get(`http://sandbox-service-${config?.context?.projectId}:3000/list-files`);
+            const files = response.data?.files || [];
 
-            
-                
+            writer?.("Files listed successfully: " + files.join(", ") + "\n");
 
-            return JSON.stringify(response.data.files || []);
+            return JSON.stringify(files);
         } catch (error) {
             console.error("Error in list_files:", error.message);
             return `Error listing files: ${error.message}. Do not retry if the server is unreachable.`;
@@ -29,7 +29,7 @@ export const listFiles = tool(
 );
 
 export const readFiles = tool(
-    async (input,config) => {
+    async (input, config) => {
         try {
             let fileList = [];
             if (Array.isArray(input?.files)) {
@@ -42,14 +42,13 @@ export const readFiles = tool(
                 fileList = input;
             }
 
-            
-               
+            const writer = config?.writer;
+            writer?.("Reading files from the project directory: " + fileList.join(", ") + " ...\n");
 
             const query = fileList.join(",");
-            const response = await axios.get(`http://sandbox-service-${config.context.projectId}:3000/read-files?files=${encodeURIComponent(query)}`);
+            const response = await axios.get(`http://sandbox-service-${config?.context?.projectId}:3000/read-files?files=${encodeURIComponent(query)}`);
 
-            
-                 
+            writer?.("Files read successfully: " + fileList.join(", ") + "\n");
 
             return JSON.stringify(response.data.files);
         } catch (error) {
@@ -67,7 +66,7 @@ export const readFiles = tool(
 );
 
 export const updateFiles = tool(
-    async (input,config) => {
+    async (input, config) => {
         try {
             let updates = [];
             if (Array.isArray(input?.files)) {
@@ -78,15 +77,16 @@ export const updateFiles = tool(
                 updates = input;
             }
 
-            
-                  
+            const updatedFiles = updates.map((u) => u.file).filter(Boolean);
 
-            const response = await axios.patch(`http://sandbox-service-${config.context.projectId}:3000/update-files`, {
+            const writer = config?.writer;
+            writer?.("Updating/creating files in the project directory: " + updatedFiles.join(", ") + " ...\n");
+
+            const response = await axios.patch(`http://sandbox-service-${config?.context?.projectId}:3000/update-files`, {
                 updates
             });
 
-            
-                   
+            writer?.("Files updated/created successfully: " + updatedFiles.join(", ") + "\n");
 
             return JSON.stringify(response.data.results);
         } catch (error) {
