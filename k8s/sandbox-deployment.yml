@@ -1,9 +1,9 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name:  sandbox-deployment
+  name: sandbox-deployment
   labels:
-    name:  sandbox-deployment
+    name: sandbox-deployment
 spec:
   replicas: 1
   selector:
@@ -16,9 +16,9 @@ spec:
     spec:
       serviceAccountName: resource-manager
       containers:
-      - image:  sandbox:latest
+      - image: sandbox:latest
         imagePullPolicy: IfNotPresent
-        name:  main-sandbox-container
+        name: main-sandbox-container
         resources:
           limits:
             cpu: "500m"
@@ -39,6 +39,5 @@ spec:
           initialDelaySeconds: 30
           timeoutSeconds: 10
         ports:
-        - containerPort:  3000
-          name:  main-sandbox
-        
+        - containerPort: 3000
+          name: main-sandbox
