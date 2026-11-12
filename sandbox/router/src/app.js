@@ -1,15 +1,10 @@
 import express from "express";
 import morgan from "morgan";
-
+import http from "http";
 import { createProxyMiddleware } from "http-proxy-middleware";
 
 const app = express();
-
 app.use(morgan("combined"));
-
-
-
-
 
 app.get("/api/sandbox/healthz", (req, res) => {
     res.status(200).json({
@@ -24,8 +19,6 @@ app.get("/api/sandbox/readyz", (req, res) => {
         status: "ready"
     });
 });
-
-
 
 
 const proxies = {}
@@ -79,5 +72,29 @@ app.use((req,res,next)=>{
 });
 
 
+const server = http.createServer(app);
 
-export default app;
+server.on('upgrade',(req,socket,head)=>{
+    const host = req.headers.host;
+    const sandboxId = host.split('.')[0];
+    const type = host.split('.')[1];
+
+    console.log(`WS upgrade request: ${host}, sandboxId: ${sandboxId}, type:${type}`);
+    
+
+    if(type === "agent"){
+        const proxy = getAgentProxy(sandboxId);
+        proxy.upgrade(req,socket,head);
+    }
+    else if(type === "preview"){
+        const proxy = getProxy(sandboxId);
+        proxy.upgrade(req,socket,head);
+    }
+    else {
+        socket.destroy();
+    }
+});
+
+
+
+export default server;
