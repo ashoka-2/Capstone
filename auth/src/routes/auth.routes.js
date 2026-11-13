@@ -5,9 +5,14 @@ import passport from "passport";
 
 const router = Router();
 
-router.get('/google',passport.authenticate('google',{scope:['profile','email']}));
+router.get('/google',passport.authenticate('google',{
+    session:false,
+    scope:['profile','email']}));
 
-router.get('/google/callback',passport.authenticate('google',{failureRedirect:'/'}), async (req,res)=>{
+router.get('/google/callback',passport.authenticate('google',{
+    session:false,
+    failureRedirect:'/'
+}), async (req,res)=>{
     try {
         const {id, displayName, emails,photos} = req.user;
         let user = await UserModel.findOne({googleId: id});
@@ -28,7 +33,7 @@ router.get('/google/callback',passport.authenticate('google',{failureRedirect:'/
         res.redirect('/');
 
     } catch (error) {
-        console.error("Error during Google authentication: ", err);
+        console.error("Error during Google authentication: ", error);
         res.redirect('/')
     }
 });
