@@ -23,7 +23,7 @@ export const MediaViewer = ({ filePath, sandboxId, svgContent }) => {
 
   const cleanPath = filePath?.startsWith('/') ? filePath.slice(1) : filePath;
   const isSvg = cleanPath?.toLowerCase().endsWith('.svg');
-  const mediaUrl = `/preview-proxy/${sandboxId}/${cleanPath}`;
+  const mediaUrl = `/agent-proxy/${sandboxId}/raw/${cleanPath}`;
 
   // When image loads, store natural dimensions
   const handleImageLoaded = (e) => {

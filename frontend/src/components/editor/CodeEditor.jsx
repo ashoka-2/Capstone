@@ -339,6 +339,11 @@ export const CodeEditor = ({ isTreeCollapsed, onToggleTree }) => {
               <MarkdownViewer content={currentContent} fileName={activeFile} />
             </div>
           </div>
+        ) : isPureMedia ? (
+          /* Pure Media Viewer (Images, Audio, Video) */
+          <div className="flex-1 h-full overflow-hidden">
+            <MediaViewer filePath={activeFile} sandboxId={sandboxId} />
+          </div>
         ) : (
           /* Standard Monaco Editor */
           <div className="flex-1 h-full overflow-hidden">

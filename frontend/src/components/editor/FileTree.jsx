@@ -147,16 +147,26 @@ const TreeItem = ({
 
   if (node.isFolder) {
     return (
-      <div
-        className="select-none"
-        onDragOver={(e) => onDragOver(e, node)}
-        onDragLeave={onDragLeave}
-        onDrop={(e) => onDrop(e, node)}
-      >
+      <div className="select-none">
         <button
           type="button"
           onClick={() => onToggleFolder(node.path)}
           onContextMenu={(e) => onContextMenu(e, node)}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDragOver(e, node);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDragLeave(e);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onDrop(e, node);
+          }}
           style={{ paddingLeft }}
           className={`w-full flex items-center gap-1.5 py-1.5 pr-2 text-xs text-left cursor-pointer transition-colors group ${
             isDragOver
@@ -339,27 +349,33 @@ export const FileTree = ({ width = 240, isCollapsed = false, onToggleCollapse })
   // Drag and drop handlers
   const handleDragStart = (e, node) => {
     e.dataTransfer.setData('text/plain', node.path);
+    e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleDragOver = (e, node) => {
     e.preventDefault();
+    e.stopPropagation();
     if (node.isFolder) {
+      e.dataTransfer.dropEffect = 'move';
       setDragOverFolder(node.path);
     }
   };
 
-  const handleDragLeave = () => {
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     setDragOverFolder('');
   };
 
   const handleDrop = async (e, targetNode) => {
     e.preventDefault();
+    e.stopPropagation();
     setDragOverFolder('');
     const srcPath = e.dataTransfer.getData('text/plain');
     if (!srcPath || !targetNode.isFolder) return;
 
     const fileName = srcPath.split('/').pop();
-    const destPath = `${targetNode.path}/${fileName}`;
+    const destPath = targetNode.path ? `${targetNode.path.replace(/\/+$/, '')}/${fileName}` : fileName;
 
     if (srcPath === destPath) return;
 
@@ -395,6 +411,7 @@ export const FileTree = ({ width = 240, isCollapsed = false, onToggleCollapse })
             content: base64Data,
             encoding: 'base64',
           });
+          selectFile(destPath, true);
         } catch {
           // error handled in store
         }
@@ -551,6 +568,14 @@ export const FileTree = ({ width = 240, isCollapsed = false, onToggleCollapse })
       <div
         className="flex-1 overflow-y-auto py-2 font-mono"
         onContextMenu={(e) => handleContextMenu(e, { isFolder: true, path: '' })}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          handleDrop(e, { isFolder: true, path: '' });
+        }}
       >
         {filteredTree.length === 0 ? (
           <div className="p-4 text-xs text-[var(--text-subtle)] text-center">

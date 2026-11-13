@@ -6,6 +6,9 @@ import {
     listFiles,
     readFiles,
     updateFiles,
+    createFolder,
+    deleteFiles,
+    moveFiles,
     context7Resolve,
     context7Docs,
     searchImages,
@@ -23,6 +26,9 @@ You are a senior front-end engineer and high-end product designer. You build and
 - list_files: list project files. 
 - read_files: read several files in one call.
 - update_files: create or overwrite files (FULL content per file).
+- create_folder: create a new directory for organizing components/assets.
+- delete_files: delete unwanted files or folders.
+- move_files: move or rename files between directories.
 - context7_resolve: find the Context7 library ID for a package name.
 - context7_docs: fetch up-to-date docs/examples for a library ID, filtered by topic.
 - search_images: find authentic, high-resolution public images (with verified URLs) for any topic, product, or theme.
@@ -154,7 +160,7 @@ export function buildAgent({
 } = {}) {
     return createAgent({
         model: primary,
-        tools: [listFiles, readFiles, updateFiles, context7Resolve, context7Docs, searchImages],
+        tools: [listFiles, readFiles, updateFiles, createFolder, deleteFiles, moveFiles, context7Resolve, context7Docs, searchImages],
         systemPrompt: SYSTEM_PROMPT,
         middleware: fallbacks.length ? [modelFallbackMiddleware(...fallbacks)] : [],
     }).withConfig({

@@ -106,6 +106,102 @@ export const updateFiles = tool(
     }
 );
 
+
+export const createFolder = tool(
+    async ({ path: folderPath }, config) => {
+        try {
+            const writer = config?.writer;
+            writer?.(`Creating directory: ${folderPath} ...\n`);
+
+            const cleanPath = folderPath.startsWith("/") ? folderPath.slice(1) : folderPath;
+            const response = await axios.post(`http://sandbox-service-${config?.context?.projectId}:3000/create-folder`, {
+                path: cleanPath
+            });
+
+            writer?.(`Directory created successfully: ${folderPath}\n`);
+            return JSON.stringify(response.data);
+        } catch (error) {
+            console.error("Error in create_folder:", error.message);
+            return `Error creating directory: ${error.message}`;
+        }
+    },
+    {
+        name: "create_folder",
+        description: "Create a new empty directory in the project workspace (e.g. 'src/components', 'src/assets/icons').",
+        schema: z.object({
+            path: z.string().describe("Relative directory path to create")
+        })
+    }
+);
+
+export const deleteFiles = tool(
+    async ({ paths }, config) => {
+        try {
+            const writer = config?.writer;
+            const targetPaths = Array.isArray(paths) ? paths : [paths];
+            writer?.(`Deleting files/folders: ${targetPaths.join(", ")} ...\n`);
+
+            const results = [];
+            for (const p of targetPaths) {
+                const clean = p.startsWith("/") ? p.slice(1) : p;
+                const response = await axios.delete(
+                    `http://sandbox-service-${config?.context?.projectId}:3000/delete-file?path=${encodeURIComponent(clean)}`
+                );
+                results.push({ path: p, status: response.data?.status || "ok" });
+            }
+
+            writer?.(`Deleted successfully: ${targetPaths.join(", ")}\n`);
+            return JSON.stringify(results);
+        } catch (error) {
+            console.error("Error in delete_files:", error.message);
+            return `Error deleting files: ${error.message}`;
+        }
+    },
+    {
+        name: "delete_files",
+        description: "Delete one or more files or entire directories recursively from the workspace.",
+        schema: z.object({
+            paths: z.array(z.string()).describe("Array of relative paths to delete (e.g. ['src/old.jsx', 'temp/'])")
+        })
+    }
+);
+
+export const moveFiles = tool(
+    async ({ moves }, config) => {
+        try {
+            const writer = config?.writer;
+            writer?.(`Moving/renaming files: ${moves.map(m => `${m.source} -> ${m.destination}`).join(", ")} ...\n`);
+
+            const results = [];
+            for (const m of moves) {
+                const cleanSrc = m.source.startsWith("/") ? m.source.slice(1) : m.source;
+                const cleanDest = m.destination.startsWith("/") ? m.destination.slice(1) : m.destination;
+                const response = await axios.post(
+                    `http://sandbox-service-${config?.context?.projectId}:3000/move-file`,
+                    { source: cleanSrc, destination: cleanDest }
+                );
+                results.push({ source: m.source, destination: m.destination, status: response.data?.status || "ok" });
+            }
+
+            writer?.(`Files moved successfully\n`);
+            return JSON.stringify(results);
+        } catch (error) {
+            console.error("Error in move_files:", error.message);
+            return `Error moving files: ${error.message}`;
+        }
+    },
+    {
+        name: "move_files",
+        description: "Move or rename files and directories in the workspace (e.g. moving a component to a new folder).",
+        schema: z.object({
+            moves: z.array(z.object({
+                source: z.string().describe("Source relative path"),
+                destination: z.string().describe("Destination relative path")
+            })).describe("List of moves to execute")
+        })
+    }
+);
+
 const C7 = "https://context7.com/api/v1";
 
 const getC7Headers = () => {
