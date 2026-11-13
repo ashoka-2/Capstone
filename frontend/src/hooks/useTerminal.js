@@ -4,7 +4,12 @@ import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setConnected, setConnecting, setTerminalError } from '../store/slices/terminalSlice';
-import { connectTerminalSocket, sendTerminalInput, disconnectTerminalSocket } from '../services/socket';
+import {
+  connectTerminalSocket,
+  sendTerminalInput,
+  sendTerminalResize,
+  disconnectTerminalSocket,
+} from '../services/socket';
 
 export function useTerminal({ containerRef }) {
   const dispatch = useAppDispatch();
@@ -15,12 +20,13 @@ export function useTerminal({ containerRef }) {
   const fitAddonRef = useRef(null);
 
   const fitTerminal = useCallback(() => {
-    if (!fitAddonRef.current || !containerRef?.current) return;
+    if (!fitAddonRef.current || !containerRef?.current || !termRef.current) return;
     try {
       const { clientWidth, clientHeight } = containerRef.current;
       // Only fit if container has actual rendered dimensions
       if (clientWidth > 20 && clientHeight > 20) {
         fitAddonRef.current.fit();
+        sendTerminalResize(termRef.current.cols, termRef.current.rows);
       }
     } catch {
       // ignore
@@ -75,6 +81,10 @@ export function useTerminal({ containerRef }) {
 
     term.onData((data) => {
       sendTerminalInput(data);
+    });
+
+    term.onResize(({ cols, rows }) => {
+      sendTerminalResize(cols, rows);
     });
 
     termRef.current = term;

@@ -70,6 +70,16 @@ export function sendTerminalInput(data) {
 }
 
 /**
+ * Send terminal window resize event to PTY so shell columns & rows match xterm.js
+ */
+export function sendTerminalResize(cols, rows) {
+  if (socketInstance && socketInstance.connected && cols > 0 && rows > 0) {
+    socketInstance.emit('terminal-resize', { cols, rows });
+    socketInstance.emit('resize', { cols, rows });
+  }
+}
+
+/**
  * Disconnect and cleanup terminal socket
  */
 export function disconnectTerminalSocket() {

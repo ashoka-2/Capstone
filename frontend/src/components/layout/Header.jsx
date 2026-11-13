@@ -7,6 +7,8 @@ import {
   Sun,
   Moon,
   Play,
+  PanelLeft,
+  PanelLeftClose,
 } from 'lucide-react';
 import { Button } from '../common/Button';
 import { IconButton } from '../common/IconButton';
@@ -14,7 +16,7 @@ import { Badge } from '../common/Badge';
 import { useSandbox } from '../../hooks/useSandbox';
 import { useTheme } from '../../hooks/useTheme';
 
-export const Header = () => {
+export const Header = ({ isChatCollapsed, onToggleChatCollapse }) => {
   const {
     sandboxId,
     isReady,
@@ -82,6 +84,18 @@ export const Header = () => {
 
       {/* Actions: Start / New Session & Theme Toggle */}
       <div className="flex items-center gap-2">
+        {isReady && onToggleChatCollapse && (
+          <Button
+            variant={isChatCollapsed ? 'accent' : 'secondary'}
+            size="sm"
+            icon={isChatCollapsed ? <PanelLeft className="w-3.5 h-3.5" /> : <PanelLeftClose className="w-3.5 h-3.5" />}
+            onClick={onToggleChatCollapse}
+            title={isChatCollapsed ? 'Open AI Assistant panel' : 'Collapse AI Assistant panel'}
+          >
+            <span className="hidden sm:inline">{isChatCollapsed ? 'Open Chat' : 'Hide Chat'}</span>
+          </Button>
+        )}
+
         {!isReady ? (
           <Button
             variant="accent"

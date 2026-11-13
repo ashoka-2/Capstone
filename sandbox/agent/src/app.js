@@ -62,7 +62,27 @@ io.on("connection",(socket)=>{
 
     socket.on("terminal-input",(data)=>{
         ptyProcess.write(data);
-    })
+    });
+
+    socket.on("terminal-resize", (data)=>{
+        try {
+            if (data && typeof data.cols === "number" && typeof data.rows === "number") {
+                ptyProcess.resize(Math.max(10, Math.floor(data.cols)), Math.max(5, Math.floor(data.rows)));
+            }
+        } catch (err) {
+            console.error("Error resizing PTY:", err.message);
+        }
+    });
+
+    socket.on("resize", (data)=>{
+        try {
+            if (data && typeof data.cols === "number" && typeof data.rows === "number") {
+                ptyProcess.resize(Math.max(10, Math.floor(data.cols)), Math.max(5, Math.floor(data.rows)));
+            }
+        } catch (err) {
+            console.error("Error resizing PTY:", err.message);
+        }
+    });
 
     socket.on("disconnect",()=>{
     console.log("Client disconnected: "+socket.id);  

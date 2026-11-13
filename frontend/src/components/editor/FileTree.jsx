@@ -16,6 +16,7 @@ import {
   Plus,
   RefreshCw,
   Search,
+  PanelLeftClose,
 } from 'lucide-react';
 import { IconButton } from '../common/IconButton';
 import { Modal } from '../common/Modal';
@@ -200,7 +201,7 @@ const TreeItem = ({
   );
 };
 
-export const FileTree = () => {
+export const FileTree = ({ width = 240, isCollapsed = false, onToggleCollapse }) => {
   const {
     fileList,
     activeFile,
@@ -262,8 +263,13 @@ export const FileTree = () => {
     setIsModalOpen(false);
   };
 
+  if (isCollapsed) return null;
+
   return (
-    <div className="w-64 border-r border-[var(--line)] bg-[var(--surface)] flex flex-col h-full shrink-0 select-none">
+    <div
+      style={{ width: `${width}px` }}
+      className="border-r border-[var(--line)] bg-[var(--surface)] flex flex-col h-full shrink-0 select-none overflow-hidden"
+    >
       {/* File Tree Header */}
       <div className="h-12 px-3 border-b border-[var(--line)] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
@@ -294,6 +300,14 @@ export const FileTree = () => {
             size="sm"
             onClick={() => setIsModalOpen(true)}
           />
+          {onToggleCollapse && (
+            <IconButton
+              icon={<PanelLeftClose className="w-3.5 h-3.5" />}
+              label="Collapse Explorer"
+              size="sm"
+              onClick={onToggleCollapse}
+            />
+          )}
         </div>
       </div>
 

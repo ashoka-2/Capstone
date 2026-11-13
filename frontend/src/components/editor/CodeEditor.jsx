@@ -8,6 +8,7 @@ import {
   Eye,
   Columns,
   Check,
+  PanelLeft,
 } from 'lucide-react';
 import { Button } from '../common/Button';
 import { IconButton } from '../common/IconButton';
@@ -18,7 +19,7 @@ import { useSandbox } from '../../hooks/useSandbox';
 import { useTheme } from '../../hooks/useTheme';
 import { getFileCategory } from '../../utils/fileType';
 
-export const CodeEditor = () => {
+export const CodeEditor = ({ isTreeCollapsed, onToggleTree }) => {
   const { sandboxId } = useSandbox();
   const {
     activeFile,
@@ -82,6 +83,14 @@ export const CodeEditor = () => {
       {/* Editor Top Bar */}
       <div className="h-12 px-4 border-b border-[var(--line)] bg-[var(--surface)] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 text-xs font-mono">
+          {isTreeCollapsed && onToggleTree && (
+            <IconButton
+              icon={<PanelLeft className="w-3.5 h-3.5" />}
+              label="Open File Explorer"
+              size="sm"
+              onClick={onToggleTree}
+            />
+          )}
           <FileCode className="w-4 h-4 text-[var(--accent-text)]" />
           <span className="text-[var(--text)] font-medium truncate max-w-[200px] sm:max-w-xs">
             {activeFile || 'No file selected'}

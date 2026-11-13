@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { Trash2, Sparkles, Loader2 } from 'lucide-react';
+import { Trash2, Sparkles, Loader2, PanelLeftClose } from 'lucide-react';
 import { ChatMessage } from './ChatMessage';
 import { ChatComposer } from './ChatComposer';
 import { AgentTrajectory } from './AgentTrajectory';
@@ -8,7 +8,7 @@ import { useAIChat } from '../../hooks/useAIChat';
 import { useSandbox } from '../../hooks/useSandbox';
 import { useFiles } from '../../hooks/useFiles';
 
-export const ChatPanel = ({ onGenerationComplete }) => {
+export const ChatPanel = ({ onGenerationComplete, onToggleCollapse }) => {
   const { isReady, setActiveTab } = useSandbox();
   const { selectFile, fileList } = useFiles();
   const {
@@ -56,13 +56,23 @@ export const ChatPanel = ({ onGenerationComplete }) => {
           </span>
         </div>
 
-        <IconButton
-          icon={<Trash2 className="w-3.5 h-3.5" />}
-          label="Clear chat history"
-          size="sm"
-          onClick={clearChatHistory}
-          disabled={messages.length <= 1}
-        />
+        <div className="flex items-center gap-1">
+          <IconButton
+            icon={<Trash2 className="w-3.5 h-3.5" />}
+            label="Clear chat history"
+            size="sm"
+            onClick={clearChatHistory}
+            disabled={messages.length <= 1}
+          />
+          {onToggleCollapse && (
+            <IconButton
+              icon={<PanelLeftClose className="w-3.5 h-3.5" />}
+              label="Collapse AI chat sidebar"
+              size="sm"
+              onClick={onToggleCollapse}
+            />
+          )}
+        </div>
       </div>
 
       {/* Messages Scroll Area */}
