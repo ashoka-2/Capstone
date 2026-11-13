@@ -35,6 +35,16 @@ export function getFileCategory(filePath = '') {
     };
   }
 
+  if (ext === 'md' || ext === 'markdown') {
+    return {
+      category: 'markdown',
+      ext,
+      language: 'markdown',
+      isMarkdown: true,
+      isMedia: false,
+    };
+  }
+
   if (IMAGE_EXTENSIONS.has(ext)) {
     return {
       category: 'image',

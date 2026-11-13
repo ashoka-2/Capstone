@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import http from "http";
 import { createProxyMiddleware } from "http-proxy-middleware";
+import { createProxyServer } from "httpxy";
 
 const app = express();
 app.use(morgan("combined"));
@@ -20,81 +21,78 @@ app.get("/api/sandbox/readyz", (req, res) => {
     });
 });
 
+const proxies = {};
+const agentProxies = {};
 
-const proxies = {}
-const agentProxies = {}
+function getProxy(sandboxId) {
+    const target = `http://sandbox-service-${sandboxId}`;
 
-function getProxy(sandboxId){
-    const target =  `http://sandbox-service-${sandboxId}`;
-
-    if(!proxies[sandboxId]){
+    if (!proxies[sandboxId]) {
         proxies[sandboxId] = createProxyMiddleware({
             target,
-            changeOrigin:true,
-            ws:true
-        })
+            changeOrigin: true,
+        });
     }
     return proxies[sandboxId];
 }
 
-function getAgentProxy(sandboxId){
-    const target =  `http://sandbox-service-${sandboxId}:3000`;
+function getAgentProxy(sandboxId) {
+    const target = `http://sandbox-service-${sandboxId}:3000`;
 
-    if(!agentProxies[sandboxId]){
+    if (!agentProxies[sandboxId]) {
         agentProxies[sandboxId] = createProxyMiddleware({
             target,
-            changeOrigin:true,
-            ws:true
-        })
+            changeOrigin: true,
+        });
     }
     return agentProxies[sandboxId];
 }
 
+app.use((req, res, next) => {
+    const host = req.headers.host || "";
+    const parts = host.split('.');
+    const sandboxId = parts[0];
+    const type = parts[1];
 
-
-app.use((req,res,next)=>{
-    const host = req.headers.host;
-    const sandboxId = host.split('.')[0];
-
-    if(host.split('.')[1] === "agent"){
-        return getAgentProxy(sandboxId)(req,res,next);
-    }
-    else if(host.split('.')[1] === "preview"){
-        return getProxy(sandboxId)(req,res,next);
-    }
-    else {
+    if (type === "agent") {
+        return getAgentProxy(sandboxId)(req, res, next);
+    } else if (type === "preview") {
+        return getProxy(sandboxId)(req, res, next);
+    } else {
         return res.status(404).json({
             message: "Unknown host pattern",
             status: "error"
         });
     }
-
 });
-
 
 const server = http.createServer(app);
 
-server.on('upgrade',(req,socket,head)=>{
-    const host = req.headers.host;
-    const sandboxId = host.split('.')[0];
-    const type = host.split('.')[1];
+const wsProxy = createProxyServer({ changeOrigin: true });
+wsProxy.on('error', (err, req, socket) => {
+    console.error("WS Proxy error:", err.message);
+    socket?.destroy();
+});
+
+server.on('upgrade', (req, socket, head) => {
+    socket.on('error', () => socket.destroy());
+
+    const host = req.headers.host || "";
+    const parts = host.split('.');
+    const sandboxId = parts[0];
+    const type = parts[1];
 
     console.log(`WS upgrade request: ${host}, sandboxId: ${sandboxId}, type:${type}`);
-    
 
-    if(type === "agent"){
-        const proxy = getAgentProxy(sandboxId);
-        proxy.upgrade(req,socket,head);
-    }
-    else if(type === "preview"){
-        const proxy = getProxy(sandboxId);
-        proxy.upgrade(req,socket,head);
-    }
-    else {
+    if (type === "agent") {
+        wsProxy.ws(req, socket, { target: `http://sandbox-service-${sandboxId}:3000` }, head)
+            .catch(() => socket.destroy());
+    } else if (type === "preview") {
+        wsProxy.ws(req, socket, { target: `http://sandbox-service-${sandboxId}` }, head)
+            .catch(() => socket.destroy());
+    } else {
         socket.destroy();
     }
 });
-
-
 
 export default server;

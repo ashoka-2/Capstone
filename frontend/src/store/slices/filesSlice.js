@@ -5,6 +5,7 @@ const initialState = {
   activeFile: 'src/App.jsx',
   fileContents: {}, // { [filePath: string]: string }
   isUnsaved: {},    // { [filePath: string]: boolean }
+  diffOriginals: {}, // { [filePath: string]: string } original code before AI modification
   isLoadingList: false,
   isLoadingContent: false,
   isSaving: false,
@@ -51,6 +52,18 @@ const filesSlice = createSlice({
         }
       });
     },
+    setDiffOriginals: (state, action) => {
+      state.diffOriginals = {
+        ...state.diffOriginals,
+        ...action.payload,
+      };
+    },
+    clearDiffOriginal: (state, action) => {
+      delete state.diffOriginals[action.payload];
+    },
+    clearAllDiffs: (state) => {
+      state.diffOriginals = {};
+    },
     setSaving: (state, action) => {
       state.isSaving = action.payload;
     },
@@ -76,6 +89,9 @@ export const {
   setFileContent,
   updateLocalContent,
   invalidateFileCache,
+  setDiffOriginals,
+  clearDiffOriginal,
+  clearAllDiffs,
   setSaving,
   markSaved,
   setFilesError,

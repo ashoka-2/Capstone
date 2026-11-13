@@ -158,3 +158,107 @@ export async function createFilesApi(sandboxId, files) {
 
   return response.json();
 }
+
+
+/**
+ * Delete a file or directory recursively
+ * Endpoint: DELETE /agent-proxy/<sandboxId>/delete-file?path=<path>
+ */
+export async function deleteFileApi(sandboxId, filePath) {
+  if (!sandboxId) throw new Error('Sandbox ID is required');
+  if (!filePath) throw new Error('Path is required');
+
+  const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath;
+  const baseUrl = getAgentBaseUrl(sandboxId);
+
+  const response = await fetch(`${baseUrl}/delete-file?path=${encodeURIComponent(cleanPath)}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to delete: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Create an empty directory
+ * Endpoint: POST /agent-proxy/<sandboxId>/create-folder
+ */
+export async function createFolderApi(sandboxId, folderPath) {
+  if (!sandboxId) throw new Error('Sandbox ID is required');
+  if (!folderPath) throw new Error('Folder path is required');
+
+  const cleanPath = folderPath.startsWith('/') ? folderPath.slice(1) : folderPath;
+  const baseUrl = getAgentBaseUrl(sandboxId);
+
+  const response = await fetch(`${baseUrl}/create-folder`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ path: cleanPath }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to create folder: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Upload an image or binary/text file
+ * Endpoint: POST /agent-proxy/<sandboxId>/upload-file
+ */
+export async function uploadFileApi(sandboxId, { file, content, encoding = 'base64' }) {
+  if (!sandboxId) throw new Error('Sandbox ID is required');
+
+  const cleanPath = file.startsWith('/') ? file.slice(1) : file;
+  const baseUrl = getAgentBaseUrl(sandboxId);
+
+  const response = await fetch(`${baseUrl}/upload-file`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ file: cleanPath, content, encoding }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to upload file: ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Move or rename a file or folder (drag & drop)
+ * Endpoint: POST /agent-proxy/<sandboxId>/move-file
+ */
+export async function moveFileApi(sandboxId, source, destination) {
+  if (!sandboxId) throw new Error('Sandbox ID is required');
+
+  const cleanSrc = source.startsWith('/') ? source.slice(1) : source;
+  const cleanDest = destination.startsWith('/') ? destination.slice(1) : destination;
+  const baseUrl = getAgentBaseUrl(sandboxId);
+
+  const response = await fetch(`${baseUrl}/move-file`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ source: cleanSrc, destination: cleanDest }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to move file: ${response.status}`);
+  }
+
+  return response.json();
+}

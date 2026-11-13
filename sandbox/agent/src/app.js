@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express from "express";
 import morgan from "morgan";
 import fs from "fs";
@@ -13,6 +14,7 @@ const app = express();
 
 const httpServer = http.createServer(app);
 
+app.use(cors({ methods: ["GET","POST","PATCH","DELETE"], origin: "*" }));
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -278,5 +280,89 @@ app.post("/create-files", async (req, res) => {
 
 
 
+
+
+/**
+ * @route DELETE /delete-file
+ * @description Deletes a file or directory recursively.
+ */
+app.delete("/delete-file", async (req, res) => {
+    try {
+        const target = req.query.path || req.body?.path;
+        if (!target) {
+            return res.status(400).json({ message: "path is required", status: "error" });
+        }
+        const fullPath = path.join(WORKING_DIR, target);
+        if (path.resolve(fullPath) === path.resolve(WORKING_DIR)) {
+            return res.status(400).json({ message: "Cannot delete root directory", status: "error" });
+        }
+        await fs.promises.rm(fullPath, { recursive: true, force: true });
+        res.status(200).json({ message: `Deleted ${target} successfully`, status: "ok" });
+    } catch (err) {
+        res.status(500).json({ message: `Error deleting: ${err.message}`, status: "error" });
+    }
+});
+
+/**
+ * @route POST /create-folder
+ * @description Creates an empty directory.
+ */
+app.post("/create-folder", async (req, res) => {
+    try {
+        const target = req.body?.path;
+        if (!target) {
+            return res.status(400).json({ message: "path is required", status: "error" });
+        }
+        const fullPath = path.join(WORKING_DIR, target);
+        await fs.promises.mkdir(fullPath, { recursive: true });
+        res.status(200).json({ message: "Folder created successfully", status: "ok" });
+    } catch (err) {
+        res.status(500).json({ message: `Error creating folder: ${err.message}`, status: "error" });
+    }
+});
+
+/**
+ * @route POST /upload-file
+ * @description Uploads an image or binary/text file with base64 or raw content.
+ */
+app.post("/upload-file", async (req, res) => {
+    try {
+        const { file, content, encoding } = req.body || {};
+        if (!file || content === undefined) {
+            return res.status(400).json({ message: "file and content are required", status: "error" });
+        }
+        const fullPath = path.join(WORKING_DIR, file);
+        await fs.promises.mkdir(path.dirname(fullPath), { recursive: true });
+        if (encoding === "base64") {
+            const buffer = Buffer.from(content, "base64");
+            await fs.promises.writeFile(fullPath, buffer);
+        } else {
+            await fs.promises.writeFile(fullPath, content, "utf-8");
+        }
+        res.status(200).json({ message: "File uploaded successfully", file, status: "ok" });
+    } catch (err) {
+        res.status(500).json({ message: `Error uploading file: ${err.message}`, status: "error" });
+    }
+});
+
+/**
+ * @route POST /move-file
+ * @description Moves / renames a file or folder (e.g. for drag-and-drop).
+ */
+app.post("/move-file", async (req, res) => {
+    try {
+        const { source, destination } = req.body || {};
+        if (!source || !destination) {
+            return res.status(400).json({ message: "source and destination are required", status: "error" });
+        }
+        const srcPath = path.join(WORKING_DIR, source);
+        const destPath = path.join(WORKING_DIR, destination);
+        await fs.promises.mkdir(path.dirname(destPath), { recursive: true });
+        await fs.promises.rename(srcPath, destPath);
+        res.status(200).json({ message: "File moved successfully", status: "ok" });
+    } catch (err) {
+        res.status(500).json({ message: `Error moving file: ${err.message}`, status: "error" });
+    }
+});
 
 export default httpServer;

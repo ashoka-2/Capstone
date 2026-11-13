@@ -10,6 +10,7 @@ export default defineConfig({
     allowedHosts: true,
     hmr: {
       clientPort: 80,
+      protocol: 'ws',
     },
     watch: {
       usePolling: true,

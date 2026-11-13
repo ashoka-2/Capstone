@@ -8,6 +8,8 @@ import {
   setFileContent,
   updateLocalContent,
   invalidateFileCache,
+  clearDiffOriginal,
+  clearAllDiffs,
   setSaving,
   markSaved,
   setFilesError,
@@ -17,6 +19,10 @@ import {
   readFilesApi,
   updateFilesApi,
   createFilesApi,
+  deleteFileApi,
+  createFolderApi,
+  uploadFileApi,
+  moveFileApi,
 } from '../services/api';
 import { getFileCategory } from '../utils/fileType';
 
@@ -29,6 +35,7 @@ export function useFiles() {
     activeFile,
     fileContents,
     isUnsaved,
+    diffOriginals,
     isLoadingList,
     isLoadingContent,
     isSaving,
@@ -145,11 +152,86 @@ export function useFiles() {
     [sandboxId, refreshFiles, dispatch]
   );
 
+  const deleteFileOrFolder = useCallback(
+    async (targetPath) => {
+      if (!sandboxId || !targetPath) return;
+      try {
+        await deleteFileApi(sandboxId, targetPath);
+        await refreshFiles(true);
+        if (activeFile === targetPath || activeFile.startsWith(`${targetPath}/`)) {
+          dispatch(setActiveFile(''));
+        }
+      } catch (err) {
+        dispatch(setFilesError(err.message || 'Failed to delete'));
+        throw err;
+      }
+    },
+    [sandboxId, activeFile, refreshFiles, dispatch]
+  );
+
+  const createFolder = useCallback(
+    async (folderPath) => {
+      if (!sandboxId || !folderPath) return;
+      try {
+        await createFolderApi(sandboxId, folderPath);
+        await refreshFiles(true);
+      } catch (err) {
+        dispatch(setFilesError(err.message || 'Failed to create folder'));
+        throw err;
+      }
+    },
+    [sandboxId, refreshFiles, dispatch]
+  );
+
+  const uploadFile = useCallback(
+    async ({ file, content, encoding = 'base64' }) => {
+      if (!sandboxId || !file) return;
+      try {
+        await uploadFileApi(sandboxId, { file, content, encoding });
+        await refreshFiles(true);
+        dispatch(setActiveFile(file));
+      } catch (err) {
+        dispatch(setFilesError(err.message || 'Failed to upload file'));
+        throw err;
+      }
+    },
+    [sandboxId, refreshFiles, dispatch]
+  );
+
+  const moveFile = useCallback(
+    async (source, destination) => {
+      if (!sandboxId || !source || !destination) return;
+      try {
+        await moveFileApi(sandboxId, source, destination);
+        await refreshFiles(true);
+        if (activeFile === source) {
+          dispatch(setActiveFile(destination));
+        }
+      } catch (err) {
+        dispatch(setFilesError(err.message || 'Failed to move file'));
+        throw err;
+      }
+    },
+    [sandboxId, activeFile, refreshFiles, dispatch]
+  );
+
+  const clearDiff = useCallback(
+    (file) => {
+      if (file) {
+        dispatch(clearDiffOriginal(file));
+      } else {
+        dispatch(clearAllDiffs());
+      }
+    },
+    [dispatch]
+  );
+
   return {
     fileList,
     activeFile,
     fileContents,
     isUnsaved,
+    diffOriginals,
     isLoadingList,
     isLoadingContent,
     isSaving,
@@ -161,5 +243,12 @@ export function useFiles() {
     modifyFileLocal,
     saveActiveFile,
     createNewFile,
+    deleteFileOrFolder,
+    createFolder,
+    uploadFile,
+    moveFile,
+    clearDiff,
   };
 }
+
+export default useFiles;

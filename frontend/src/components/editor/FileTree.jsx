@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import {
   Folder,
   FolderOpen,
@@ -17,6 +17,10 @@ import {
   RefreshCw,
   Search,
   PanelLeftClose,
+  Trash2,
+  Upload,
+  FolderPlus,
+  FilePlus,
 } from 'lucide-react';
 import { IconButton } from '../common/IconButton';
 import { Modal } from '../common/Modal';
@@ -26,13 +30,16 @@ import { useFiles } from '../../hooks/useFiles';
 
 /**
  * Transforms a flat array of file paths into a nested tree structure.
- * e.g. ["src/App.jsx", "src/assets/hero.png", "index.html"] -> Tree
+ * Handles both files and empty folders (ending with /)
  */
 function buildTree(fileList) {
   const root = { name: '', path: '', isFolder: true, children: {} };
 
   fileList.forEach((filePath) => {
-    const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath;
+    const isExplicitDir = filePath.endsWith('/');
+    const cleanPath = filePath.replace(/\/+$/, '').replace(/^\/+/, '');
+    if (!cleanPath) return;
+
     const parts = cleanPath.split('/');
     let current = root;
 
@@ -44,9 +51,11 @@ function buildTree(fileList) {
         current.children[part] = {
           name: part,
           path: currentPath,
-          isFolder: !isLast,
+          isFolder: isExplicitDir ? true : !isLast,
           children: {},
         };
+      } else if (isExplicitDir && isLast) {
+        current.children[part].isFolder = true;
       }
       current = current.children[part];
     });
@@ -63,7 +72,6 @@ function buildTree(fileList) {
       return child;
     });
 
-    // Sort: Folders first alphabetically, then files alphabetically
     return items.sort((a, b) => {
       if (a.isFolder === b.isFolder) {
         return a.name.localeCompare(b.name);
@@ -122,22 +130,39 @@ const TreeItem = ({
   activeFile,
   isUnsaved,
   expandedFolders,
+  dragOverFolder,
   onToggleFolder,
   onSelectFile,
+  onContextMenu,
+  onDragStart,
+  onDragOver,
+  onDragLeave,
+  onDrop,
 }) => {
   const isExpanded = !!expandedFolders[node.path];
   const isActive = activeFile === node.path;
   const hasUnsaved = isUnsaved[node.path];
+  const isDragOver = dragOverFolder === node.path;
   const paddingLeft = `${depth * 14 + 10}px`;
 
   if (node.isFolder) {
     return (
-      <div className="select-none">
+      <div
+        className="select-none"
+        onDragOver={(e) => onDragOver(e, node)}
+        onDragLeave={onDragLeave}
+        onDrop={(e) => onDrop(e, node)}
+      >
         <button
           type="button"
           onClick={() => onToggleFolder(node.path)}
+          onContextMenu={(e) => onContextMenu(e, node)}
           style={{ paddingLeft }}
-          className="w-full flex items-center gap-1.5 py-1.5 pr-2 text-xs text-left text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]/60 cursor-pointer transition-colors group"
+          className={`w-full flex items-center gap-1.5 py-1.5 pr-2 text-xs text-left cursor-pointer transition-colors group ${
+            isDragOver
+              ? 'bg-[var(--accent-soft)] border-l-2 border-[var(--accent)] text-[var(--text)]'
+              : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]/60'
+          }`}
         >
           <span className="text-[var(--text-subtle)] group-hover:text-[var(--text)]">
             {isExpanded ? (
@@ -149,9 +174,9 @@ const TreeItem = ({
           {isExpanded ? (
             <FolderOpen className="w-4 h-4 text-amber-400 shrink-0" />
           ) : (
-            <Folder className="w-4 h-4 text-amber-400/80 shrink-0" />
+            <Folder className="w-4 h-4 text-amber-400 shrink-0" />
           )}
-          <span className="font-medium text-[var(--text)] truncate">{node.name}</span>
+          <span className="truncate font-medium">{node.name}</span>
         </button>
 
         {isExpanded && node.childrenList && (
@@ -164,8 +189,14 @@ const TreeItem = ({
                 activeFile={activeFile}
                 isUnsaved={isUnsaved}
                 expandedFolders={expandedFolders}
+                dragOverFolder={dragOverFolder}
                 onToggleFolder={onToggleFolder}
                 onSelectFile={onSelectFile}
+                onContextMenu={onContextMenu}
+                onDragStart={onDragStart}
+                onDragOver={onDragOver}
+                onDragLeave={onDragLeave}
+                onDrop={onDrop}
               />
             ))}
           </div>
@@ -174,19 +205,21 @@ const TreeItem = ({
     );
   }
 
-  // File Item
   return (
     <button
       type="button"
-      onClick={() => onSelectFile(node.path, true)}
+      draggable
+      onDragStart={(e) => onDragStart(e, node)}
+      onClick={() => onSelectFile(node.path)}
+      onContextMenu={(e) => onContextMenu(e, node)}
       style={{ paddingLeft: `${depth * 14 + 24}px` }}
       className={`w-full flex items-center justify-between py-1.5 pr-2 text-xs text-left cursor-pointer transition-colors ${
         isActive
-          ? 'bg-[var(--accent-soft)] text-[var(--accent-text)] font-medium border-l-2 border-[var(--accent)]'
-          : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]/50'
+          ? 'bg-[var(--accent-soft)] text-[var(--text)] border-l-2 border-[var(--accent)] font-medium'
+          : 'text-[var(--text-muted)] hover:text-[var(--text)] hover:bg-[var(--surface-2)]/60'
       }`}
     >
-      <div className="flex items-center gap-2 truncate">
+      <div className="flex items-center gap-1.5 min-w-0">
         {getFileIcon(node.name)}
         <span className="truncate">{node.name}</span>
       </div>
@@ -209,14 +242,32 @@ export const FileTree = ({ width = 240, isCollapsed = false, onToggleCollapse })
     refreshFiles,
     selectFile,
     createNewFile,
+    createFolder,
+    deleteFileOrFolder,
+    uploadFile,
+    moveFile,
     isUnsaved,
   } = useFiles();
 
   const [filter, setFilter] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newFilePath, setNewFilePath] = useState('');
+  const [modalMode, setModalMode] = useState(null); // 'file' | 'folder' | 'delete'
+  const [modalPath, setModalPath] = useState('');
+  const [targetFolder, setTargetFolder] = useState('');
+  const [nodeToDelete, setNodeToDelete] = useState(null);
+  const [dragOverFolder, setDragOverFolder] = useState('');
 
-  // Track expanded folder paths; default expand top-level folders
+  // Context Menu State
+  const [contextMenu, setContextMenu] = useState(null); // { x, y, node }
+  const fileInputRef = useRef(null);
+
+  // Close context menu on outside click
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    window.addEventListener('click', handleClick);
+    return () => window.removeEventListener('click', handleClick);
+  }, []);
+
+  // Track expanded folder paths
   const [expandedFolders, setExpandedFolders] = useState({
     src: true,
     'src/assets': true,
@@ -249,18 +300,140 @@ export const FileTree = ({ width = 240, isCollapsed = false, onToggleCollapse })
   };
 
   const tree = useMemo(() => {
-    const list = filter
-      ? fileList.filter((f) => f.toLowerCase().includes(filter.toLowerCase()))
-      : fileList;
-    return buildTree(list);
-  }, [fileList, filter]);
+    return buildTree(fileList);
+  }, [fileList]);
 
+  const filteredTree = useMemo(() => {
+    if (!filter.trim()) return tree;
+    const lower = filter.toLowerCase();
+
+    function filterNodes(nodes) {
+      return nodes
+        .map((node) => {
+          if (node.isFolder) {
+            const matchedChildren = filterNodes(node.childrenList || []);
+            if (matchedChildren.length > 0 || node.name.toLowerCase().includes(lower)) {
+              return { ...node, childrenList: matchedChildren };
+            }
+            return null;
+          }
+          return node.name.toLowerCase().includes(lower) ? node : null;
+        })
+        .filter(Boolean);
+    }
+
+    return filterNodes(tree);
+  }, [tree, filter]);
+
+  // Context menu handler
+  const handleContextMenu = (e, node) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      node,
+    });
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (e, node) => {
+    e.dataTransfer.setData('text/plain', node.path);
+  };
+
+  const handleDragOver = (e, node) => {
+    e.preventDefault();
+    if (node.isFolder) {
+      setDragOverFolder(node.path);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverFolder('');
+  };
+
+  const handleDrop = async (e, targetNode) => {
+    e.preventDefault();
+    setDragOverFolder('');
+    const srcPath = e.dataTransfer.getData('text/plain');
+    if (!srcPath || !targetNode.isFolder) return;
+
+    const fileName = srcPath.split('/').pop();
+    const destPath = `${targetNode.path}/${fileName}`;
+
+    if (srcPath === destPath) return;
+
+    try {
+      await moveFile(srcPath, destPath);
+    } catch {
+      // handled in store
+    }
+  };
+
+  // Upload handler from local computer
+  const triggerUpload = (folder = '') => {
+    setTargetFolder(folder);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileInputChange = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const reader = new FileReader();
+
+      reader.onload = async () => {
+        const base64Data = reader.result.split(',')[1];
+        const destFolder = targetFolder ? targetFolder.replace(/\/+$/, '') : 'src/assets';
+        const destPath = `${destFolder}/${file.name}`;
+
+        try {
+          await uploadFile({
+            file: destPath,
+            content: base64Data,
+            encoding: 'base64',
+          });
+        } catch {
+          // error handled in store
+        }
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    e.target.value = '';
+  };
+
+  // Modal submit handlers
   const handleCreateSubmit = async (e) => {
     e.preventDefault();
-    if (!newFilePath.trim()) return;
-    await createNewFile(newFilePath.trim(), '// New file created\n');
-    setNewFilePath('');
-    setIsModalOpen(false);
+    if (!modalPath.trim()) return;
+
+    const fullPath = targetFolder
+      ? `${targetFolder.replace(/\/+$/, '')}/${modalPath.trim()}`
+      : modalPath.trim();
+
+    if (modalMode === 'file') {
+      await createNewFile(fullPath, '// New file\n');
+    } else if (modalMode === 'folder') {
+      await createFolder(fullPath);
+    }
+
+    setModalMode(null);
+    setModalPath('');
+    setTargetFolder('');
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!nodeToDelete) return;
+    try {
+      await deleteFileOrFolder(nodeToDelete.path);
+    } finally {
+      setModalMode(null);
+      setNodeToDelete(null);
+    }
   };
 
   if (isCollapsed) return null;
@@ -268,8 +441,17 @@ export const FileTree = ({ width = 240, isCollapsed = false, onToggleCollapse })
   return (
     <div
       style={{ width: `${width}px` }}
-      className="border-r border-[var(--line)] bg-[var(--surface)] flex flex-col h-full shrink-0 select-none overflow-hidden"
+      className="border-r border-[var(--line)] bg-[var(--surface)] flex flex-col h-full shrink-0 select-none overflow-hidden relative"
     >
+      {/* Hidden file input for uploading images & files from computer */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        className="hidden"
+        onChange={handleFileInputChange}
+      />
+
       {/* File Tree Header */}
       <div className="h-12 px-3 border-b border-[var(--line)] flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2">
@@ -296,9 +478,12 @@ export const FileTree = ({ width = 240, isCollapsed = false, onToggleCollapse })
           />
           <IconButton
             icon={<Plus className="w-3.5 h-3.5" />}
-            label="Create file"
+            label="Create file or folder"
             size="sm"
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setTargetFolder('');
+              setModalMode('file');
+            }}
           />
           {onToggleCollapse && (
             <IconButton
@@ -325,65 +510,227 @@ export const FileTree = ({ width = 240, isCollapsed = false, onToggleCollapse })
         </div>
       </div>
 
-      {/* Tree View Scroll Area */}
-      <div className="flex-1 overflow-y-auto py-2">
-        {fileList.length === 0 ? (
-          <div className="p-4 text-center text-xs text-[var(--text-subtle)] space-y-2">
-            <div>{isLoadingList ? 'Listing files in container...' : 'No files found.'}</div>
-            <Button variant="secondary" size="sm" onClick={refreshFiles}>
-              Load Files
-            </Button>
-          </div>
-        ) : tree.length === 0 ? (
-          <div className="p-4 text-center text-xs text-[var(--text-subtle)]">
-            No files match "{filter}"
+      {/* Quick Action Ribbon */}
+      <div className="px-3 py-1.5 border-b border-[var(--line)] flex items-center gap-1 text-[11px] text-[var(--text-muted)] bg-[var(--surface-2)]/30">
+        <button
+          type="button"
+          onClick={() => {
+            setTargetFolder('');
+            setModalMode('file');
+          }}
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-[var(--surface-2)] hover:text-[var(--text)] cursor-pointer"
+          title="New File"
+        >
+          <FilePlus className="w-3 h-3 text-cyan-400" />
+          <span>+File</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setTargetFolder('');
+            setModalMode('folder');
+          }}
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-[var(--surface-2)] hover:text-[var(--text)] cursor-pointer"
+          title="New Folder"
+        >
+          <FolderPlus className="w-3 h-3 text-amber-400" />
+          <span>+Folder</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => triggerUpload('src/assets')}
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-[var(--surface-2)] hover:text-[var(--text)] cursor-pointer ml-auto"
+          title="Upload Images from computer"
+        >
+          <Upload className="w-3 h-3 text-emerald-400" />
+          <span>Upload</span>
+        </button>
+      </div>
+
+      {/* Tree Content Area */}
+      <div
+        className="flex-1 overflow-y-auto py-2 font-mono"
+        onContextMenu={(e) => handleContextMenu(e, { isFolder: true, path: '' })}
+      >
+        {filteredTree.length === 0 ? (
+          <div className="p-4 text-xs text-[var(--text-subtle)] text-center">
+            {isLoadingList ? 'Loading tree...' : 'No files found'}
           </div>
         ) : (
-          tree.map((node) => (
+          filteredTree.map((node) => (
             <TreeItem
               key={node.path}
               node={node}
-              depth={0}
               activeFile={activeFile}
               isUnsaved={isUnsaved}
               expandedFolders={expandedFolders}
+              dragOverFolder={dragOverFolder}
               onToggleFolder={toggleFolder}
               onSelectFile={selectFile}
+              onContextMenu={handleContextMenu}
+              onDragStart={handleDragStart}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             />
           ))
         )}
       </div>
 
-      {/* Create File Modal */}
+      {/* Right-Click Context Menu Popup */}
+      {contextMenu && (
+        <div
+          style={{ top: `${Math.min(window.innerHeight - 200, contextMenu.y)}px`, left: `${Math.min(window.innerWidth - 200, contextMenu.x)}px` }}
+          className="fixed z-50 min-w-[160px] bg-[var(--surface)] border border-[var(--line-strong)] rounded-[var(--r-card)] shadow-xl p-1 text-xs select-none backdrop-blur-md"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {contextMenu.node.isFolder ? (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setTargetFolder(contextMenu.node.path);
+                  setModalMode('file');
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[var(--surface-2)] text-[var(--text)] cursor-pointer text-left"
+              >
+                <FilePlus className="w-3.5 h-3.5 text-cyan-400" />
+                <span>New File...</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTargetFolder(contextMenu.node.path);
+                  setModalMode('folder');
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[var(--surface-2)] text-[var(--text)] cursor-pointer text-left"
+              >
+                <FolderPlus className="w-3.5 h-3.5 text-amber-400" />
+                <span>New Folder...</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  triggerUpload(contextMenu.node.path);
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[var(--surface-2)] text-[var(--text)] cursor-pointer text-left"
+              >
+                <Upload className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Upload Images / Files...</span>
+              </button>
+              {contextMenu.node.path && (
+                <>
+                  <div className="h-[1px] bg-[var(--line)] my-1" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNodeToDelete(contextMenu.node);
+                      setModalMode('delete');
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[var(--danger-soft)] text-[var(--danger)] cursor-pointer text-left"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete Folder</span>
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  selectFile(contextMenu.node.path);
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[var(--surface-2)] text-[var(--text)] cursor-pointer text-left"
+              >
+                <FileCode className="w-3.5 h-3.5 text-sky-400" />
+                <span>Open in Editor</span>
+              </button>
+              <div className="h-[1px] bg-[var(--line)] my-1" />
+              <button
+                type="button"
+                onClick={() => {
+                  setNodeToDelete(contextMenu.node);
+                  setModalMode('delete');
+                  setContextMenu(null);
+                }}
+                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded hover:bg-[var(--danger-soft)] text-[var(--danger)] cursor-pointer text-left"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete File</span>
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* Create File / Folder Modal */}
       <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Create New File"
-        subtitle="Provide relative path (e.g. src/components/Navbar.jsx)"
+        isOpen={modalMode === 'file' || modalMode === 'folder'}
+        onClose={() => setModalMode(null)}
+        title={
+          modalMode === 'file'
+            ? targetFolder
+              ? `New File in ${targetFolder}`
+              : 'Create New File'
+            : targetFolder
+            ? `New Folder in ${targetFolder}`
+            : 'Create New Folder'
+        }
       >
         <form onSubmit={handleCreateSubmit} className="space-y-4">
           <Input
-            value={newFilePath}
-            onChange={(e) => setNewFilePath(e.target.value)}
-            placeholder="src/components/Navbar.jsx"
+            label={modalMode === 'file' ? 'File path / name' : 'Folder path / name'}
+            value={modalPath}
+            onChange={(e) => setModalPath(e.target.value)}
+            placeholder={
+              modalMode === 'file'
+                ? 'e.g. components/Button.jsx'
+                : 'e.g. assets/icons'
+            }
             autoFocus
           />
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => setIsModalOpen(false)}
-            >
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setModalMode(null)}>
               Cancel
             </Button>
-            <Button
-              variant="accent"
-              type="submit"
-              disabled={!newFilePath.trim()}
-            >
-              Create File
+            <Button variant="accent" type="submit" disabled={!modalPath.trim()}>
+              {modalMode === 'file' ? 'Create File' : 'Create Folder'}
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={modalMode === 'delete'}
+        onClose={() => setModalMode(null)}
+        title={nodeToDelete?.isFolder ? 'Delete Folder?' : 'Delete File?'}
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--text-muted)]">
+            Are you sure you want to permanently delete{' '}
+            <span className="font-mono text-[var(--text)] font-semibold">
+              {nodeToDelete?.path}
+            </span>
+            {nodeToDelete?.isFolder && ' and all files inside it'}?
+          </p>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setModalMode(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDeleteConfirm}>
+              Delete Permanently
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

@@ -18,6 +18,7 @@ export const ChatPanel = ({ onGenerationComplete, onToggleCollapse }) => {
     streamLogs,
     sendMessage,
     stopGeneration,
+    undoAiChanges,
     clearChatHistory,
   } = useAIChat({ onGenerationComplete });
 
@@ -78,7 +79,12 @@ export const ChatPanel = ({ onGenerationComplete, onToggleCollapse }) => {
       {/* Messages Scroll Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg) => (
-          <ChatMessage key={msg.id} message={msg} onFileClick={handleFileClick} />
+          <ChatMessage
+            key={msg.id}
+            message={msg}
+            onFileClick={handleFileClick}
+            onUndo={undoAiChanges}
+          />
         ))}
 
         {/* Live Streaming Message */}

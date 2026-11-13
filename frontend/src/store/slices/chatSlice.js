@@ -43,16 +43,29 @@ const chatSlice = createSlice({
     },
     finishStreaming: (state, action) => {
       state.isStreaming = false;
-      const finalContent = action.payload || state.currentStreamText;
-      if (finalContent.trim()) {
+      const payload = action.payload;
+      let finalContent = state.currentStreamText;
+      let snapshot = null;
+
+      if (typeof payload === 'string') {
+        finalContent = payload || state.currentStreamText;
+      } else if (payload && typeof payload === 'object') {
+        finalContent = payload.content || state.currentStreamText;
+        snapshot = payload.snapshot || null;
+      }
+
+      // Always create assistant message if there's content OR tool logs were executed
+      if (finalContent.trim() || state.streamLogs.length > 0) {
         state.messages.push({
           id: `assistant-${Date.now()}`,
           role: 'assistant',
-          content: finalContent,
+          content: finalContent.trim() || 'Applied requested changes to the project files.',
           logs: [...state.streamLogs],
+          snapshot: snapshot,
           timestamp: new Date().toISOString(),
         });
       }
+
       state.currentStreamText = '';
       state.streamLogs = [];
     },
@@ -86,4 +99,3 @@ export const {
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
-
